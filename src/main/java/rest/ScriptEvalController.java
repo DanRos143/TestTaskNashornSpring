@@ -5,13 +5,18 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -21,6 +26,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RestController
 @EnableAutoConfiguration
 public class ScriptEvalController {
+    ExecutorService pool =
+            Executors.newCachedThreadPool();
+
     private AtomicInteger counter = new AtomicInteger();
     private ConcurrentMap<Integer, ScriptWrapper> scripts =
             new ConcurrentHashMap<>();
@@ -28,12 +36,20 @@ public class ScriptEvalController {
 
     @RequestMapping(value = "/api/scripts/", method = RequestMethod.GET)
     public List<ScriptWrapper> getAllScripts(){
-        return (List<ScriptWrapper>) scripts.values();
+        return new ArrayList<>(scripts.values());
     }
 
     @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.GET)
-    public String getScript(@PathVariable Integer id){
-        return scripts.get(id).toString();
+    public void getScript(@PathVariable Integer id, OutputStream out) throws IOException,
+            ExecutionException, InterruptedException, TimeoutException {
+        PrintStream printStream = new PrintStream(out);
+        System.setOut(printStream);
+        String script = scripts.get(id).getContent();
+        Callable<String> callable = () -> evaluator.evaluate(script);
+        Future<String> future = pool.submit(callable);
+        while (!future.isDone()){
+            TimeUnit.SECONDS.sleep(3);
+        }
     }
 
     @RequestMapping(value = "/api/scripts", method = RequestMethod.POST)
@@ -42,8 +58,17 @@ public class ScriptEvalController {
                 , new ScriptWrapper(script));
         HttpHeaders headers = new HttpHeaders();
         headers.set("TrackURL", "/api/scripts/" + counter.get());
-        return new ResponseEntity<>("Accepted",headers,HttpStatus.ACCEPTED);
+        return new ResponseEntity<>("Accepted", headers, HttpStatus.CREATED);
     }
+
+    @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<String> deleteScript(@PathVariable Integer id){
+        //stop execution of related thread
+
+        scripts.remove(id);
+        return new ResponseEntity<>("Deleted", HttpStatus.OK);
+    }
+
 
     public static void main(String[] args) {
         SpringApplication.run(ScriptEvalController.class, args);

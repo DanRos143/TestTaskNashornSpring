@@ -3,12 +3,11 @@ package rest;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Created by danros on 21.11.16.
- */
 
 public class ScriptEvaluator {
     private final Lock lock = new ReentrantLock();

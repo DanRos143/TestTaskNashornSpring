@@ -6,10 +6,11 @@ package rest;
 public class ScriptWrapper {
     private String content;
     private String response;
-    private boolean status;
+    private Status status;
 
     public ScriptWrapper(String content) {
         this.content = content;
+        this.status = Status.Waiting;
     }
 
     public String getContent() {
@@ -28,18 +29,17 @@ public class ScriptWrapper {
         this.response = response;
     }
 
-    public boolean isStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(boolean status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
     @Override
     public String toString() {
         return "content='" + content + '\'' +
-                ", status=" + status +
-                '}';
+                ", status=" + status;
     }
 }
