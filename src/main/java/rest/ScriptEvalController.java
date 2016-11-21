@@ -26,10 +26,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RestController
 @EnableAutoConfiguration
 public class ScriptEvalController {
+    private AtomicInteger counter = new AtomicInteger();
     ExecutorService pool =
             Executors.newCachedThreadPool();
-
-    private AtomicInteger counter = new AtomicInteger();
     private ConcurrentMap<Integer, ScriptWrapper> scripts =
             new ConcurrentHashMap<>();
     private ScriptEvaluator evaluator = new ScriptEvaluator();
@@ -42,14 +41,12 @@ public class ScriptEvalController {
     @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.GET)
     public void getScript(@PathVariable Integer id, OutputStream out) throws IOException,
             ExecutionException, InterruptedException, TimeoutException {
+        System.out.println(Thread.currentThread().getName());
         PrintStream printStream = new PrintStream(out);
         System.setOut(printStream);
         String script = scripts.get(id).getContent();
         Callable<String> callable = () -> evaluator.evaluate(script);
         Future<String> future = pool.submit(callable);
-        while (!future.isDone()){
-            TimeUnit.SECONDS.sleep(3);
-        }
     }
 
     @RequestMapping(value = "/api/scripts", method = RequestMethod.POST)
@@ -63,8 +60,6 @@ public class ScriptEvalController {
 
     @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteScript(@PathVariable Integer id){
-        //stop execution of related thread
-
         scripts.remove(id);
         return new ResponseEntity<>("Deleted", HttpStatus.OK);
     }
