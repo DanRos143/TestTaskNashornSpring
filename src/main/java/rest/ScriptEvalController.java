@@ -1,5 +1,6 @@
 package rest;
 
+import jdk.nashorn.internal.codegen.CompilerConstants;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpHeaders;
@@ -31,22 +32,18 @@ public class ScriptEvalController {
             Executors.newCachedThreadPool();
     private ConcurrentMap<Integer, ScriptWrapper> scripts =
             new ConcurrentHashMap<>();
-    private ScriptEvaluator evaluator = new ScriptEvaluator();
-
-    @RequestMapping(value = "/api/scripts/", method = RequestMethod.GET)
-    public List<ScriptWrapper> getAllScripts(){
-        return new ArrayList<>(scripts.values());
-    }
+    private ScriptEvaluator evaluator = new ScriptEvaluator();//?
 
     @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.GET)
-    public void getScript(@PathVariable Integer id, OutputStream out) throws IOException,
-            ExecutionException, InterruptedException, TimeoutException {
-        System.out.println(Thread.currentThread().getName());
-        PrintStream printStream = new PrintStream(out);
-        System.setOut(printStream);
-        String script = scripts.get(id).getContent();
-        Callable<String> callable = () -> evaluator.evaluate(script);
+    public void getScript(@PathVariable Integer id){
+        Callable<String> callable = () -> {
+            Thread.currentThread().setName("script" + id);
+            System.out.println("inside callable");
+            System.out.println(Thread.currentThread().getName());
+            return evaluator.evaluate(scripts.get(id).getContent());
+        };
         Future<String> future = pool.submit(callable);
+
     }
 
     @RequestMapping(value = "/api/scripts", method = RequestMethod.POST)
@@ -55,8 +52,18 @@ public class ScriptEvalController {
                 , new ScriptWrapper(script));
         HttpHeaders headers = new HttpHeaders();
         headers.set("TrackURL", "/api/scripts/" + counter.get());
+        System.out.println(Thread.currentThread().getName());
         return new ResponseEntity<>("Accepted", headers, HttpStatus.CREATED);
     }
+
+
+
+    public static void main(String[] args) {
+        SpringApplication.run(ScriptEvalController.class, args);
+    }
+
+}
+/*
 
     @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteScript(@PathVariable Integer id){
@@ -65,7 +72,14 @@ public class ScriptEvalController {
     }
 
 
-    public static void main(String[] args) {
-        SpringApplication.run(ScriptEvalController.class, args);
-    }
-}
+
+     ExecutionException, InterruptedException, TimeoutException {
+        System.out.println(Thread.currentThread().getName());
+        PrintStream printStream = new PrintStream(out);
+        System.setOut(printStream);
+
+        String script = scripts.get(id).getContent();
+        Callable<String> callable = () -> evaluator.evaluate(script);
+        Future<String> future = pool.submit(callable);
+        System.out.println(Thread.currentThread().getName());
+ */
