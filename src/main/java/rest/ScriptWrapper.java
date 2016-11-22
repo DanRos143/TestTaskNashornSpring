@@ -5,7 +5,7 @@ package rest;
  */
 public class ScriptWrapper {
     private String content;
-    private String response;
+    private String output;
     private Status status;
 
     public ScriptWrapper(String content) {
@@ -21,12 +21,12 @@ public class ScriptWrapper {
         this.content = content;
     }
 
-    public String getResponse() {
-        return response;
+    public String getOutput() {
+        return output;
     }
 
-    public void setResponse(String response) {
-        this.response = response;
+    public void setOutput(String output) {
+        this.output = output;
     }
 
     public Status getStatus() {

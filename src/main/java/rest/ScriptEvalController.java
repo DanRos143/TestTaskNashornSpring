@@ -1,6 +1,5 @@
 package rest;
 
-import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpHeaders;
@@ -8,17 +7,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.Writer;
+import java.io.*;
+import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Created by danros on 21.11.16.
- */
 
 @RestController
 @EnableAutoConfiguration
@@ -34,15 +27,21 @@ public class ScriptEvalController {
 
     @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.GET)
     public String getScript(@PathVariable Integer id,
-                            HttpServletResponse response)
+                            OutputStream out)
             throws ExecutionException, InterruptedException, IOException {
-        PrintStream printStream = new PrintStream(response.getOutputStream(), true);
+        PrintStream printStream = new PrintStream(out, true);
         System.setOut(printStream);
-        response.addHeader("Connection", "close");
         String script = scripts.get(id).getContent();
-        Callable<String> callable = () -> evaluator.evaluate(script);
+        Callable<String> callable = () -> {
+            scripts.get(id).setStatus(Status.Running);
+            return evaluator.evaluate(script);
+        };
         Future<String> future = pool.submit(callable);
         futures.put(id, future);
+        if (future.isDone()){
+            scripts.get(id).setStatus(Status.Done);
+            futures.remove(id);
+        }
         return future.get();
     }
 
@@ -60,6 +59,19 @@ public class ScriptEvalController {
         futures.get(id).cancel(true);
         scripts.remove(id);
         return new ResponseEntity<>("Deleted\n", HttpStatus.OK);
+    }
+    @RequestMapping(value = "/api/scripts/{id}/status")
+    public Status getStatus(@PathVariable Integer id){
+        return scripts.get(id).getStatus();
+    }
+    @RequestMapping(value = "/api/scripts/{id}/output")
+    public String getOutput(@PathVariable Integer id){
+        return scripts.get(id).getOutput();
+    }
+
+    @RequestMapping(value = "/api/scripts", method = RequestMethod.GET)
+    public Collection<ScriptWrapper> getAllScripts(){
+        return scripts.values();
     }
 
     public static void main(String[] args) {
