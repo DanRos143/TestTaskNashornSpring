@@ -1,12 +1,15 @@
 package rest;
 
+import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.Collection;
 import java.util.concurrent.*;
@@ -27,10 +30,13 @@ public class ScriptEvalController {
 
     @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.GET)
     public String getScript(@PathVariable Integer id,
-                            OutputStream out)
+                            HttpServletResponse response, HttpServletRequest request)
             throws ExecutionException, InterruptedException, IOException {
-        PrintStream printStream = new PrintStream(out, true);
+
+        PrintStream printStream = new PrintStream(response.getOutputStream(), true);
         System.setOut(printStream);
+
+        response.setHeader("Keep-Alive", "timeout=1");
         String script = scripts.get(id).getContent();
         Callable<String> callable = () -> {
             scripts.get(id).setStatus(Status.Running);
@@ -38,6 +44,12 @@ public class ScriptEvalController {
         };
         Future<String> future = pool.submit(callable);
         futures.put(id, future);
+        BufferedReader bf = new BufferedReader(request.getReader());
+        while (!future.isDone()){
+            if (bf.read() == -1){
+                System.out.println("The client is dead");
+            }
+        }
         if (future.isDone()){
             scripts.get(id).setStatus(Status.Done);
             futures.remove(id);
@@ -78,3 +90,14 @@ public class ScriptEvalController {
         SpringApplication.run(ScriptEvalController.class, args);
     }
 }
+
+/*while (!future.isDone()){
+            System.out.println(request.getInputStream().read());
+            TimeUnit.SECONDS.sleep(1);
+        }
+        if (future.isDone()){
+                scripts.get(id).setStatus(Status.Done);
+                futures.remove(id);
+                System.out.println(Thread.currentThread().getName());
+                }
+ */
