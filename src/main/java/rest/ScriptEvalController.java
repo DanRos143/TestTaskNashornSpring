@@ -42,6 +42,7 @@ public class ScriptEvalController {
             System.out.println(Thread.currentThread().getName());
             return evaluator.evaluate(scripts.get(id).getContent());
         };
+        
         Future<String> future = pool.submit(callable);
 
     }
