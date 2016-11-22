@@ -1,10 +1,7 @@
 package rest;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import javax.script.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -20,11 +17,13 @@ public class ScriptEvaluator {
         try {
             lock.lock();
             response = (String) engine.eval(script);
+            if (response == null) response = "";
         } catch (ScriptException se){
-            se.printStackTrace();
+            response = se.getMessage();
         } finally {
             lock.unlock();
         }
         return response;
     }
+
 }
