@@ -32,11 +32,11 @@ public class ScriptEvalController {
     public String getScript(@PathVariable Integer id,
                             HttpServletResponse response, HttpServletRequest request)
             throws ExecutionException, InterruptedException, IOException {
-
-        PrintStream printStream = new PrintStream(response.getOutputStream(), true);
+        OutputStream out = response.getOutputStream();
+        InputStream in = request.getInputStream();
+        PrintStream printStream = new PrintStream(out, true);
         System.setOut(printStream);
 
-        response.setHeader("Keep-Alive", "timeout=1");
         String script = scripts.get(id).getContent();
         Callable<String> callable = () -> {
             scripts.get(id).setStatus(Status.Running);
@@ -44,16 +44,23 @@ public class ScriptEvalController {
         };
         Future<String> future = pool.submit(callable);
         futures.put(id, future);
-        BufferedReader bf = new BufferedReader(request.getReader());
+
         while (!future.isDone()){
-            if (bf.read() == -1){
-                System.out.println("The client is dead");
+            out.write((char) 0);
+            out.flush();
+            System.out.println("conn");
+            try {
+                TimeUnit.SECONDS.sleep(3);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
-        if (future.isDone()){
-            scripts.get(id).setStatus(Status.Done);
-            futures.remove(id);
-        }
+        /*
+        */
+
+
+        scripts.get(id).setStatus(Status.Done);
+        futures.remove(id);
         return future.get();
     }
 
@@ -86,18 +93,8 @@ public class ScriptEvalController {
         return scripts.values();
     }
 
+
     public static void main(String[] args) {
         SpringApplication.run(ScriptEvalController.class, args);
     }
 }
-
-/*while (!future.isDone()){
-            System.out.println(request.getInputStream().read());
-            TimeUnit.SECONDS.sleep(1);
-        }
-        if (future.isDone()){
-                scripts.get(id).setStatus(Status.Done);
-                futures.remove(id);
-                System.out.println(Thread.currentThread().getName());
-                }
- */
