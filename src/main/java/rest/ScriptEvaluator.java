@@ -1,13 +1,19 @@
 package rest;
 
-import javax.script.*;
-import java.util.concurrent.TimeUnit;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-
+/**
+ * Created by danros on 23.11.16.
+ */
 public class ScriptEvaluator {
-    private final Lock lock = new ReentrantLock();
+    private Lock lock;
+
+    public ScriptEvaluator(Lock lock) {
+        this.lock = lock;
+    }
 
     public String evaluate(String script){
         String response = null;

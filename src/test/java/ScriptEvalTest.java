@@ -1,6 +1,4 @@
 import org.junit.Test;
-import rest.ScriptEvaluator;
-import sun.nio.ch.ThreadPool;
 
 import java.util.concurrent.*;
 
@@ -10,15 +8,7 @@ import java.util.concurrent.*;
 
 public class ScriptEvalTest {
 
-    @Test
-    public void scriptExecutionTest(){
-        ScriptEvaluator evaluator =
-                new ScriptEvaluator();
-        System.out.println(System.currentTimeMillis());
-        evaluator.evaluate("" +
-                "for(var i = 0; i < 10; i++) print('Test completed!')");
-        System.out.println(System.currentTimeMillis());
-    }
+
 
     @Test
     public void futureExecutionTest() throws ExecutionException, InterruptedException {
