@@ -5,12 +5,13 @@ package rest;
  */
 public class ScriptWrapper {
     private String content;
-    private String output;
+    private StringBuilder output;
     private Status status;
 
     public ScriptWrapper(String content) {
         this.content = content;
         this.status = Status.Waiting;
+        this.output = new StringBuilder();
     }
 
     public String getContent() {
@@ -21,12 +22,12 @@ public class ScriptWrapper {
         this.content = content;
     }
 
-    public String getOutput() {
+    public StringBuilder getOutput() {
         return output;
     }
 
     public void setOutput(String output) {
-        this.output = output;
+        this.output = new StringBuilder(output);
     }
 
     public Status getStatus() {

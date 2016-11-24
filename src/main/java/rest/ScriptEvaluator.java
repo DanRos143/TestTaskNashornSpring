@@ -3,6 +3,7 @@ package rest;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.io.BufferedOutputStream;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -22,9 +23,7 @@ public class ScriptEvaluator {
         ScriptEngine engine = factory.getEngineByName("nashorn");
         try {
             lock.lock();
-            System.out.println("evaluating");
             response = (String) engine.eval(script);
-            System.out.println("finished");
             if (response == null) response = "";
         } catch (ScriptException se){
             response = se.getMessage();
