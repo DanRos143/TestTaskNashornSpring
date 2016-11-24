@@ -1,22 +1,13 @@
 package rest;
 
-import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.async.DeferredResult;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -30,38 +21,41 @@ public class ScriptEvalController {
             Executors.newCachedThreadPool();
     private ConcurrentMap<Integer, ScriptWrapper> scripts =
             new ConcurrentHashMap<>();
-    private Map<Integer, Future<String>> futures =
-            new HashMap<>();
+    private ConcurrentMap<Integer, Future<String>> futures =
+            new ConcurrentHashMap<>();
     private ReentrantLock lock = new ReentrantLock();
     ScriptEvaluator evaluator = new ScriptEvaluator(lock);
 
 
 
     @RequestMapping(value = "/api/scripts/{id}")
-    public DeferredResult<String> test(@PathVariable Integer id, OutputStream out, InputStream in) throws ExecutionException, InterruptedException{
-        DeferredResult<String> deferredResult = new DeferredResult<>();
+    public String test(@PathVariable Integer id, OutputStream out, InputStream in) throws ExecutionException, InterruptedException{
 
         PrintStream printStream = new PrintStream(out, true);
         System.setOut(printStream);
-
-        Callable<DeferredResult<String>> task = () -> {
-            //System.out.println("Result");
+        Callable<String> task = () -> {
             scripts.get(id).setStatus(Status.Running);
-            String result = evaluator.evaluate(scripts.get(id).getContent());
-            deferredResult.setResult(result);
-            return deferredResult;
+            return evaluator.evaluate(scripts.get(id).getContent());
         };
-        Future<DeferredResult<String>> future = executorService.submit(task);
+        Future<String> future = executorService.submit(task);
+        System.out.println(futures.get(id) == null);
+        futures.put(id, future);
         while (!future.isDone()){
             try {
                 out.write((char) 0);
                 out.flush();
+                //System.out.println("conn");
+                if (future.isCancelled()) throw new IOException();
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             } catch (IOException e) {
                 scripts.get(id).setStatus(Status.Interrupted);
                 System.out.println(e.getLocalizedMessage());
                 future.cancel(true);
             }
         }
+        //scripts.get(id).setStatus(Status.Done);
         return future.get();
     }
     @RequestMapping(value = "/api/scripts", method = RequestMethod.POST)
@@ -78,6 +72,14 @@ public class ScriptEvalController {
         return scripts.get(id).getStatus();
     }
 
+    @RequestMapping(value = "/api/scripts/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<String> deleteScript(@PathVariable Integer id){
+        System.out.println("Canceling");
+        futures.get(id).cancel(true);
+        //scripts.get(id).setStatus(Status.Interrupted);
+        scripts.remove(id);
+        return new ResponseEntity<>("Deleted\n", HttpStatus.OK);
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(ScriptEvalController.class, args);
@@ -137,3 +139,12 @@ private AtomicInteger counter = new AtomicInteger();
         return scripts.values();
     }
  */
+/*try {
+                out.write((char) 0);
+                out.flush();
+                //in.read();
+            } catch (IOException e) {
+                scripts.get(id).setStatus(Status.Interrupted);
+                System.out.println(e.getLocalizedMessage());
+                future.cancel(true);
+            }*/
