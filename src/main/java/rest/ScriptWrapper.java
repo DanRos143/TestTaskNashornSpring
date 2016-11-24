@@ -1,10 +1,14 @@
 package rest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Created by danros on 21.11.16.
  */
 public class ScriptWrapper {
     private String content;
+
+    @JsonIgnore
     private StringBuilder output;
     private Status status;
 

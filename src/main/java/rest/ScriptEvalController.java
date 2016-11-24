@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 
 @RestController
@@ -20,19 +19,20 @@ import java.util.stream.Collectors;
 public class ScriptEvalController {
     AtomicInteger counter = new AtomicInteger(0);
     ExecutorService executorService =
-            Executors.newCachedThreadPool();
+            Executors.newWorkStealingPool();
+
     private ConcurrentMap<Integer, ScriptWrapper> scripts =
             new ConcurrentHashMap<>();
     private ConcurrentMap<Integer, Future<String>> futures =
             new ConcurrentHashMap<>();
     private ReentrantLock lock = new ReentrantLock();
-    ScriptEvaluator evaluator = new ScriptEvaluator(lock);
+    ScriptEvaluator evaluator = new ScriptEvaluator();
 
 
 
     @RequestMapping(value = "/api/scripts/{id}")
     public String test(@PathVariable Integer id, OutputStream out, InputStream in)
-            throws ExecutionException, InterruptedException{
+            throws ExecutionException{
         PrintStream printStream = new PrintStream(out, true);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream copyStream = new PrintStream(baos, true);
@@ -42,27 +42,37 @@ public class ScriptEvalController {
             scripts.get(id).setStatus(Status.Running);
             return evaluator.evaluate(scripts.get(id).getContent());
         };
-        
-        Future<String> future = executorService.submit(task);
-        futures.put(id, future);
-        while (!future.isDone()){
-            try {
-                out.write((char) 0);
-                out.flush();
-                scripts.get(id).getOutput().append(baos.toString());
-                printStream.print(baos.toString());
-                if (future.isCancelled()) throw new IOException();
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                scripts.get(id).setStatus(Status.Interrupted);
-                System.out.println(e.getLocalizedMessage());
-                future.cancel(true);
+        Future<String> future;
+        try {
+            lock.lock();
+            future = executorService.submit(task);
+            futures.put(id, future);
+            while (!future.isDone()){
+                try {
+                    out.write((char) 0);
+                    out.flush();//exception if client is dead
+                    TimeUnit.SECONDS.sleep(1);
+                    scripts.get(id).getOutput().append(baos.toString());
+                    printStream.print(baos.toString());
+                } catch (IOException e) {
+                    printStream.print(e.getLocalizedMessage());
+                    future.cancel(true);
+                } catch (InterruptedException e) {
+                    printStream.print(e.getLocalizedMessage());
+                }
             }
+        } finally {
+            lock.unlock();
         }
-        if (!future.isCancelled()) scripts.get(id).setStatus(Status.Done);
-        return future.get();
+        String result = "";
+        try {
+            result = future.get();
+        } catch (InterruptedException | CancellationException e) {
+            printStream.println(e.getLocalizedMessage());
+        }
+        return result;
+
+
     }
     @RequestMapping(value = "/api/scripts", method = RequestMethod.POST)
     public ResponseEntity<String> saveScript(@RequestBody String script){
