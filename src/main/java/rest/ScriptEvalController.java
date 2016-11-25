@@ -1,7 +1,5 @@
 package rest;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +13,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 
 @RestController
-@EnableAutoConfiguration
 public class ScriptEvalController {
     AtomicInteger counter = new AtomicInteger(0);
     ExecutorService executorService =
@@ -49,13 +46,13 @@ public class ScriptEvalController {
             futures.put(id, future);
             while (!future.isDone()){
                 try {
-                    out.write((char) 0);
                     out.flush();//exception if client is dead
                     TimeUnit.SECONDS.sleep(1);
                     scripts.get(id).getOutput().append(baos.toString());
                     printStream.print(baos.toString());
                 } catch (IOException e) {
                     printStream.print(e.getLocalizedMessage());
+                    scripts.get(id).setStatus(Status.Interrupted);
                     future.cancel(true);
                 } catch (InterruptedException e) {
                     printStream.print(e.getLocalizedMessage());
@@ -104,7 +101,5 @@ public class ScriptEvalController {
         return scripts.values();
     }
 
-    public static void main(String[] args) {
-        SpringApplication.run(ScriptEvalController.class, args);
-    }
+
 }
