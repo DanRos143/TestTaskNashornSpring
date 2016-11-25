@@ -2,6 +2,8 @@ package rest;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.concurrent.Future;
+
 /**
  * Created by danros on 21.11.16.
  */
@@ -12,12 +14,22 @@ public class ScriptWrapper {
     private StringBuilder output;
     private Status status;
 
+
+    private Future<String> future;
+
+
     public ScriptWrapper(String content) {
         this.content = content;
         this.status = Status.Waiting;
         this.output = new StringBuilder();
     }
+    public Future<String> getFuture() {
+        return future;
+    }
 
+    public void setFuture(Future<String> future) {
+        this.future = future;
+    }
     public String getContent() {
         return content;
     }
@@ -48,3 +60,7 @@ public class ScriptWrapper {
                 ", status=" + status;
     }
 }
+
+/*
+
+ */
