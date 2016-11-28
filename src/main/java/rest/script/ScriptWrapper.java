@@ -1,4 +1,4 @@
-package rest;
+package rest.script;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -15,19 +15,20 @@ public class ScriptWrapper {
     private Status status;
 
 
-    private Future<String> future;
+    private Future<?> future;
 
 
-    public ScriptWrapper(String content) {
+    public ScriptWrapper(String content, Future<?> future) {
         this.content = content;
         this.status = Status.Waiting;
+        this.future = future;
         this.output = new StringBuilder();
     }
-    public Future<String> getFuture() {
+    public Future<?> getFuture() {
         return future;
     }
 
-    public void setFuture(Future<String> future) {
+    public void setFuture(Future<?> future) {
         this.future = future;
     }
     public String getContent() {

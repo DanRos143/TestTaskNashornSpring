@@ -1,22 +1,34 @@
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import javax.script.*;
+import java.sql.Time;
+import java.util.concurrent.*;
 
-/**
- * Created by danros on 25.11.16.
- */
+
 public class NashornTest {
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    ScriptEngine nashorn = new ScriptEngineManager().getEngineByName("nashorn");
 
+    @Test
+    public void scriptExecutionCancelingTest() throws InterruptedException {
 
-
-
-    @Test(expected = ScriptException.class)
-    public void preCompileFailTest() throws ScriptException {
-        String notValidScript = "print(";
-        ScriptEngine nashorn = new ScriptEngineManager().getEngineByName("nashorn");
-        Compilable compilable = (Compilable) nashorn;
-        CompiledScript compiledScript = compilable.compile(notValidScript);
+        Future<?> submit = executorService.submit(() -> {
+            try {
+                nashorn.eval("while(true){ var d = new Date();print(d);}");
+            } catch (ScriptException e) {
+                e.printStackTrace();
+            }
+            return new ResponseEntity(HttpStatus.CREATED);
+        });
+        TimeUnit.SECONDS.sleep(2);
+        submit.cancel(true);
+        Assert.assertTrue(submit.isDone());
     }
 
+
+
 }
+

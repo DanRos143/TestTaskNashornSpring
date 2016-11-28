@@ -1,4 +1,4 @@
-package rest;
+package rest.script;
 
 /**
  * Created by danros on 21.11.16.
