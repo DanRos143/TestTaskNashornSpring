@@ -1,4 +1,4 @@
-package rest.evaluator;
+package rest.manager;
 
 import javax.script.CompiledScript;
 import javax.script.ScriptException;
@@ -6,7 +6,7 @@ import javax.script.ScriptException;
 /**
  * Created by danros on 25.11.16.
  */
-public interface ScriptEvaluator {
+public interface ScriptManager {
     void evaluate(String script) throws ScriptException;
     CompiledScript compile(String script) throws ScriptException;
 }

@@ -12,25 +12,27 @@ public class ScriptWrapper {
 
     @JsonIgnore
     private StringBuilder output;
-    private Status status;
+    private ScriptStatus status;
 
 
-    private Future<?> future;
+    private Thread thread;
 
 
-    public ScriptWrapper(String content, Future<?> future) {
+    public ScriptWrapper(String content, Thread thread) {
         this.content = content;
-        this.status = Status.Waiting;
-        this.future = future;
+        this.thread = thread;
+        this.status = ScriptStatus.Waiting;
         this.output = new StringBuilder();
     }
-    public Future<?> getFuture() {
-        return future;
+
+    public Thread getThread() {
+        return thread;
     }
 
-    public void setFuture(Future<?> future) {
-        this.future = future;
+    public void setThread(Thread thread) {
+        this.thread = thread;
     }
+
     public String getContent() {
         return content;
     }
@@ -47,11 +49,11 @@ public class ScriptWrapper {
         this.output = new StringBuilder(output);
     }
 
-    public Status getStatus() {
+    public ScriptStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(ScriptStatus status) {
         this.status = status;
     }
 

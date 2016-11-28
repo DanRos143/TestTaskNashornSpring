@@ -2,11 +2,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import rest.controller.ScriptEvalController;
+import rest.manager.ScriptManagerImpl;
+import rest.service.EvaluationServiceImpl;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -16,10 +20,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ScriptEvalController.class)
+@SpringBootTest(classes = {EvaluationServiceImpl.class, ScriptManagerImpl.class, ScriptEvalController.class})
 public class RestTest {
-
-
 
     private MockMvc mockMvc;
 
@@ -29,12 +31,12 @@ public class RestTest {
     }
 
     @Test
-    public void testSayHelloWorld() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(post("/api/scripts").content("print(11)"))
-                .andExpect(status().is(201)).andReturn();
-        String trackURL = mvcResult.getResponse().getHeader("TrackURL");
-        this.mockMvc.perform(get(trackURL)).andExpect(status().is2xxSuccessful());
+    public void test(){
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
     }
+
 
 
 }

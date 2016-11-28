@@ -1,4 +1,4 @@
-package rest.evaluator;
+package rest.manager;
 
 import org.springframework.stereotype.Component;
 
@@ -8,10 +8,10 @@ import javax.script.*;
  * Created by danros on 25.11.16.
  */
 @Component
-public class ScriptEvaluatorImpl implements ScriptEvaluator {
+public class ScriptManagerImpl implements ScriptManager {
     private ScriptEngine nashorn;
 
-    public ScriptEvaluatorImpl() {
+    public ScriptManagerImpl() {
         nashorn = new ScriptEngineManager().getEngineByName("nashorn");
     }
 
