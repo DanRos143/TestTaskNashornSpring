@@ -1,10 +1,10 @@
 package rest.service;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.context.request.async.DeferredResult;
 import rest.script.ScriptWrapper;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public interface EvaluationService {
 
-    DeferredResult<ResponseEntity> runAsynchronously(String script);
+    Future<?> runAsynchronously(String script);
     ResponseEntity runSynchronously(String script);
     ConcurrentMap<Integer, ScriptWrapper> getScriptWrappers();
     AtomicInteger getCounter();

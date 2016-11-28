@@ -4,9 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.util.UriComponentsBuilder;
 import rest.manager.ScriptManager;
+import rest.manager.ScriptManagerImpl;
 import rest.script.ScriptWrapper;
 
 import javax.script.CompiledScript;
@@ -35,32 +35,16 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     @Override
-    public DeferredResult<ResponseEntity> runAsynchronously(String script) {
-        DeferredResult<ResponseEntity> deferred = new DeferredResult<>();
-        Future<?> submit = executorService.submit(() -> {
+    public Future<?> runAsynchronously(String script) {
+        return executorService.submit(() -> {
             try {
                 scripts.put(counter.incrementAndGet(),
                         new ScriptWrapper(script, Thread.currentThread()));
-                CompiledScript compiledScript = evaluator.compile(script);
-                compiledScript.eval();
-                deferred.setResult(ResponseEntity.created(
-                        UriComponentsBuilder
-                                .fromPath("/api/scripts/{id}")
-                                .buildAndExpand(counter.get())
-                                .toUri())
-                        .build());
+                evaluator.compile(script).eval();
             } catch (ScriptException e) {
-                deferred.setErrorResult(ResponseEntity.badRequest());
+                e.printStackTrace();
             }
         });
-        try {
-            submit.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        return deferred;
     }
 
     @Override

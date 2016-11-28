@@ -5,17 +5,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rest.manager.ScriptManagerImpl;
+import rest.script.ScriptWrapper;
 import rest.service.EvaluationService;
 
+import javax.script.ScriptException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @RestController
 @RequestMapping(value = "/api/scripts/")
 public class ScriptEvalController {
+    ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private AtomicInteger counter = new AtomicInteger(0);
+    private ConcurrentMap<Integer, ScriptWrapper> scripts =
+            new ConcurrentHashMap<>();
 
     private EvaluationService service;
 
@@ -26,29 +33,60 @@ public class ScriptEvalController {
 
     @PostMapping("async")
     public void asyncEval(@RequestBody String script, HttpServletResponse response, HttpServletRequest request) throws IOException, ExecutionException, InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
         PrintStream printStream = new PrintStream(response.getOutputStream(), true);
-        response.setHeader("Location", "/api/scripts/" + 0);
+        //just for test
         response.setStatus(202);
         System.setOut(printStream);
-        Callable<Object> callable = () -> {
-            new ScriptManagerImpl().evaluate(script);
-            return new Object();
+        Runnable r = () -> {
+            try {
+                int n = counter.incrementAndGet();
+                scripts.put(n, new ScriptWrapper(script, Thread.currentThread()));
+                response.setHeader("Location", "/api/scripts/" + n);
+                new ScriptManagerImpl().evaluate(script);
+            } catch (ScriptException e) {
+                e.printStackTrace();
+            }
         };
-        Future<Object> future = executorService.submit(callable);
+        Future<?> future = executorService.submit(r);
         future.get();
-
-
     }
 
     @PostMapping("sync")
-    public void syncEval(HttpServletResponse response, HttpServletRequest request, @RequestBody String script) throws IOException {
-        service.runSynchronously(script);
+    public void syncEval(OutputStream out, @RequestBody String script) throws IOException {
+        PrintStream printStream = new PrintStream(out, true);
+        //response.setStatus(202);
+        //System.setOut(printStream);
+        int n = counter.incrementAndGet();
+        executorService.submit(() -> {
+            scripts.put(n, new ScriptWrapper(script, Thread.currentThread()));
+            //response.setHeader("Location", "/api/scripts/" + n);
+            try {
+                new ScriptManagerImpl().evaluate(script);
+            } catch (ScriptException e) {
+                e.printStackTrace();
+            }
+        });
+        while (scripts.get(n).getThread().isAlive()){
+            try {
+                out.write((char) 0);
+                out.flush();
+            } catch (IOException e) {
+                scripts.get(n).getThread().stop();
+            }
+        }
     }
 
     @DeleteMapping(value = "{id}")
     public ResponseEntity killScript(@PathVariable Integer id){
-        return service.killScript(id);
+        ResponseEntity responseEntity = null;
+        ScriptWrapper sw = scripts.get(id);
+        if (sw == null) responseEntity = new ResponseEntity(HttpStatus.NOT_FOUND);
+        else {
+            sw.getThread().stop();
+            responseEntity = new ResponseEntity(HttpStatus.OK);
+        }
+        return responseEntity;
     }
     @GetMapping
     public Iterable<String> getLinks(){
