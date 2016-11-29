@@ -3,9 +3,8 @@ package rest.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import rest.compiler.ScriptCompiler;
-import rest.compiler.ScriptCompilerImpl;
 import rest.script.ScriptStatus;
 import rest.script.ScriptWrapper;
 
@@ -14,18 +13,14 @@ import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-@Component
+@Service
 public class ScriptServiceImpl implements ScriptService {
+    private final int NTHREADS = 10;
     private AtomicInteger counter = new AtomicInteger(0);
     private ConcurrentMap<Integer, ScriptWrapper> scripts =
             new ConcurrentHashMap<>();
@@ -33,7 +28,7 @@ public class ScriptServiceImpl implements ScriptService {
     private ScriptCompiler compiler;
 
     public ScriptServiceImpl() {
-        this.executorService = Executors.newFixedThreadPool(10);
+        this.executorService = Executors.newFixedThreadPool(NTHREADS);
     }
 
     @Autowired
@@ -43,12 +38,10 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Override
     public Future<?> runAsynchronously(String script, HttpServletResponse response) throws IOException {
-        ScriptWrapper scriptWrapper = new ScriptWrapper(script);
-        PrintWriter printWriter = response.getWriter();
         int id = counter.incrementAndGet();
-
-        response.setStatus(HttpServletResponse.SC_ACCEPTED);
         response.setHeader("Location", "/api/scripts/" + id);
+        PrintWriter printWriter = response.getWriter();
+        ScriptWrapper scriptWrapper = new ScriptWrapper(script);
         Runnable r = () -> {
             try {
                 scriptWrapper.setThread(Thread.currentThread());
@@ -68,27 +61,28 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Override
     public void runSynchronously(String script, HttpServletResponse response) throws IOException {
-        ServletOutputStream out = response.getOutputStream();
+        int id = counter.incrementAndGet();
+        response.setHeader("Location", "/api/scripts/" + id);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(baos, true);
         ScriptWrapper scriptWrapper = new ScriptWrapper(script);
-        int id = counter.incrementAndGet();
-        response.setStatus(HttpServletResponse.SC_ACCEPTED);
-        response.setHeader("Location", "/api/scripts/" + id);
-        Future<?> future = executorService.submit(() -> {
-            scriptWrapper.setStatus(ScriptStatus.Running);
-            scriptWrapper.setThread(Thread.currentThread());
-            scripts.put(id, scriptWrapper);
+        ServletOutputStream out = response.getOutputStream();
+        Future<?> future = executorService.submit(() -> {//scriptWrapper, id, ctx, printWriter
             try {
+                scriptWrapper.setStatus(ScriptStatus.Running);
+                scriptWrapper.setThread(Thread.currentThread());
+                scripts.put(id, scriptWrapper);
+
                 ScriptContext scriptContext = new SimpleScriptContext();
                 scriptContext.setWriter(printWriter);
                 compiler.compile(script).eval(scriptContext);
+                scriptWrapper.setStatus(ScriptStatus.Done);
             } catch (ScriptException e) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 printWriter.print(e.getLocalizedMessage());
             }
         });
-        while (true){
+        while (true){//uses future, out, baos, scriptWrapper
             try {
                 if (future.isDone()) {
                     scripts.get(id).setStatus(ScriptStatus.Done);
@@ -97,19 +91,12 @@ public class ScriptServiceImpl implements ScriptService {
                 out.write(baos.toByteArray());
                 baos.reset();
                 out.flush();
-
             } catch (IOException e) {
-                System.out.println(e.getLocalizedMessage());
                 scriptWrapper.setStatus(ScriptStatus.Dead);
                 scriptWrapper.getThread().stop();
                 break;
             }
         }
-    }
-
-    @Override
-    public ConcurrentMap<Integer, ScriptWrapper> getScriptWrappers() {
-        return scripts;
     }
 
     @Override
@@ -129,5 +116,4 @@ public class ScriptServiceImpl implements ScriptService {
         scripts.forEach((integer, scriptWrapper) -> scriptWrapper.setLocation(path + integer));
         return scripts.values();
     }
-
 }

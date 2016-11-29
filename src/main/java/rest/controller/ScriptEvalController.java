@@ -28,6 +28,7 @@ public class ScriptEvalController {
                           @RequestBody String script,
                           HttpServletResponse response)
             throws IOException, ExecutionException, InterruptedException {
+        response.setStatus(HttpServletResponse.SC_ACCEPTED);
         if (async) service.runAsynchronously(script, response).get();
         else service.runSynchronously(script, response);
     }
