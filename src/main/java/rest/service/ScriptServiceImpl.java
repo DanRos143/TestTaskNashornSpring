@@ -43,9 +43,10 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Override
     public Future<?> runAsynchronously(String script, HttpServletResponse response) throws IOException {
+        ScriptWrapper scriptWrapper = new ScriptWrapper(script);
         PrintWriter printWriter = response.getWriter();
         int id = counter.incrementAndGet();
-        ScriptWrapper scriptWrapper = new ScriptWrapper(script);
+
         response.setStatus(HttpServletResponse.SC_ACCEPTED);
         response.setHeader("Location", "/api/scripts/" + id);
         Runnable r = () -> {
@@ -58,6 +59,7 @@ public class ScriptServiceImpl implements ScriptService {
                 compiler.compile(script).eval(scriptContext);
                 scriptWrapper.setStatus(ScriptStatus.Done);
             } catch (ScriptException e) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 printWriter.print(e.getLocalizedMessage());
             }
         };
@@ -82,6 +84,7 @@ public class ScriptServiceImpl implements ScriptService {
                 scriptContext.setWriter(printWriter);
                 compiler.compile(script).eval(scriptContext);
             } catch (ScriptException e) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 printWriter.print(e.getLocalizedMessage());
             }
         });
@@ -92,8 +95,9 @@ public class ScriptServiceImpl implements ScriptService {
                     break;
                 }
                 out.write(baos.toByteArray());
-                out.flush();
                 baos.reset();
+                out.flush();
+
             } catch (IOException e) {
                 System.out.println(e.getLocalizedMessage());
                 scriptWrapper.setStatus(ScriptStatus.Dead);

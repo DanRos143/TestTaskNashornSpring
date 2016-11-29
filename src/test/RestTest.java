@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,15 +39,35 @@ public class RestTest {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
     }
 
-
     @Test
-    public void evalScriptTest() throws Exception {
+    public void evalScriptSyncronouslyTest() throws Exception {
+        mockMvc.perform(post("/api/scripts/?async=false")
+                .content("print('test passed!')")
+                .contentType(MediaType.TEXT_HTML)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(202));
 
-        MvcResult mvcResult = mockMvc.perform(post("/api/scripts/")
-                .content("print('test passed!')"))
+    }
+    @Test
+    public void evalScriptAsyncronouslyTest() throws Exception {
+        mockMvc.perform(post("/api/scripts/?async=true")
+                .content("print('test passed!'")
+                .contentType(MediaType.TEXT_HTML)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(400));
+
+    }
+    @Test
+    public void getAllLinks() throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/scripts/").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
                 .andReturn();
-        MockHttpServletResponse response = mvcResult.getResponse();
-        System.out.println(response.getHeaderValue("Location"));
+        Assert.assertTrue(result.getResponse().getContentAsString() != null);
+    }
+    @Test
+    public void deleteScriptThatDoesntExistTest() throws Exception {
+        mockMvc.perform(delete("/api/scripts/100"))
+                .andExpect(status().isNotFound());
     }
 
 

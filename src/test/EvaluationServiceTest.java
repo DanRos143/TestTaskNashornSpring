@@ -19,12 +19,12 @@ import java.util.concurrent.TimeUnit;
  */
 
 
-//@RunWith(SpringRunner.class)
-//@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, ScriptEvalController.class})
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, ScriptEvalController.class})
 public class EvaluationServiceTest {
 
 
-    //@Autowired
+    @Autowired
     ScriptCompiler scriptManager;
 
     @Test
@@ -38,41 +38,10 @@ public class EvaluationServiceTest {
     }
 
 
-    @Test
-    public void nashornExecutionWithBindings() throws InterruptedException {
-        ScriptEngine nashorn =  new ScriptEngineManager().getEngineByName("nashorn");
-        //Bindings bindings = nashorn.createBindings();
-
-        Thread t1 = new Thread(() -> {
-            try {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                PrintWriter printWriter = new PrintWriter(baos, true);
-                ScriptContext context = nashorn.getContext();
-                context.setWriter(printWriter);
-                nashorn.eval("for(var i = 0; i < 10; i++){" +
-                        "print(new Date());" +
-                        "java.util.concurrent.TimeUnit.SECONDS.sleep(2);" +
-                        "}", context);
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            }
-        });
-        Thread t2 = new Thread(() -> {
-            try {
-                ScriptContext context = nashorn.getContext();
-                nashorn.eval("for(var i = 0; i < 10; i++){" +
-                        "print(new Date());" +
-                        "java.util.concurrent.TimeUnit.SECONDS.sleep(2);" +
-                        "}", context);
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            }
-        });
-        t1.start();
-        t2.start();
-        TimeUnit.SECONDS.sleep(20);
-
-
+    @Test(expected = ScriptException.class)
+    public void nashornExecutionWithBindings() throws InterruptedException, ScriptException {
+        String badScript = "print(1";
+        scriptManager.compile(badScript);
     }
 
 

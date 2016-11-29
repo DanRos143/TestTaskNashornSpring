@@ -20,7 +20,6 @@ public class ScriptWrapper {
         this.status = ScriptStatus.Waiting;
     }
 
-
     public String getLocation() {
         return location;
     }
