@@ -16,11 +16,6 @@ public class ScriptManagerImpl implements ScriptManager {
     }
 
     @Override
-    public void evaluate(String script) throws ScriptException {
-        nashorn.eval(script);
-    }
-
-    @Override
     public CompiledScript compile(String script) throws ScriptException {
         Compilable compilable = (Compilable) nashorn;
         return compilable.compile(script);

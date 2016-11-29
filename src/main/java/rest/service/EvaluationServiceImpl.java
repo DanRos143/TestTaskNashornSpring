@@ -11,6 +11,9 @@ import rest.script.ScriptWrapper;
 
 import javax.script.CompiledScript;
 import javax.script.ScriptException;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,16 +38,27 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     @Override
-    public Future<?> runAsynchronously(String script) {
-        return executorService.submit(() -> {
+    public Future<?> runAsynchronously(String script, HttpServletResponse response) {
+        PrintStream printStream = null;
+        try {
+            printStream = new PrintStream(response.getOutputStream(), true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.setOut(printStream);
+        int n = counter.incrementAndGet();
+        response.setHeader("Location", "/api/scripts/" + n);
+        response.setStatus(HttpServletResponse.SC_ACCEPTED);
+        Runnable r = () -> {
             try {
-                scripts.put(counter.incrementAndGet(),
-                        new ScriptWrapper(script, Thread.currentThread()));
-                evaluator.compile(script).eval();
+                scripts.put(n, new ScriptWrapper(script, Thread.currentThread()));
+                new ScriptManagerImpl().compile(script).eval();
             } catch (ScriptException e) {
                 e.printStackTrace();
             }
-        });
+        };
+        Future<?> future = executorService.submit(r);
+        return future;
     }
 
     @Override
