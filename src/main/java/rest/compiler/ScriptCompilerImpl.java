@@ -1,17 +1,16 @@
-package rest.manager;
+package rest.compiler;
 
 import org.springframework.stereotype.Component;
 
 import javax.script.*;
+import java.io.PrintWriter;
 
-/**
- * Created by danros on 25.11.16.
- */
+
 @Component
-public class ScriptManagerImpl implements ScriptManager {
+public class ScriptCompilerImpl implements ScriptCompiler {
     private ScriptEngine nashorn;
 
-    public ScriptManagerImpl() {
+    public ScriptCompilerImpl() {
         nashorn = new ScriptEngineManager().getEngineByName("nashorn");
     }
 
@@ -20,6 +19,4 @@ public class ScriptManagerImpl implements ScriptManager {
         Compilable compilable = (Compilable) nashorn;
         return compilable.compile(script);
     }
-
-
 }

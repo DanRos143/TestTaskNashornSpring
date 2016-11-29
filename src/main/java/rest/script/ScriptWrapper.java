@@ -1,28 +1,32 @@
 package rest.script;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.concurrent.Future;
 
-/**
- * Created by danros on 21.11.16.
- */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ScriptWrapper {
-    private String content;
-
     @JsonIgnore
-    private StringBuilder output;
+    private String content;
+    private String location;
     private ScriptStatus status;
 
-
+    @JsonIgnore
     private Thread thread;
 
-
-    public ScriptWrapper(String content, Thread thread) {
+    public ScriptWrapper(String content) {
         this.content = content;
-        this.thread = thread;
         this.status = ScriptStatus.Waiting;
-        this.output = new StringBuilder();
+    }
+
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public Thread getThread() {
@@ -41,14 +45,6 @@ public class ScriptWrapper {
         this.content = content;
     }
 
-    public StringBuilder getOutput() {
-        return output;
-    }
-
-    public void setOutput(String output) {
-        this.output = new StringBuilder(output);
-    }
-
     public ScriptStatus getStatus() {
         return status;
     }
@@ -57,13 +53,4 @@ public class ScriptWrapper {
         this.status = status;
     }
 
-    @Override
-    public String toString() {
-        return "content='" + content + '\'' +
-                ", status=" + status;
-    }
 }
-
-/*
-
- */
