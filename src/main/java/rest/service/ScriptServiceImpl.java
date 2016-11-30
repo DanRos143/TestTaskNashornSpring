@@ -11,7 +11,6 @@ import rest.script.ScriptWrapper;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.concurrent.*;
@@ -92,16 +91,19 @@ public class ScriptServiceImpl implements ScriptService {
             baos.reset();
             out.flush();
         }
-        scriptWrapper.setStatus(ScriptStatus.Dead);
-        scriptWrapper.getThread().stop();
+        if (!future.isDone()){
+            scriptWrapper.setStatus(ScriptStatus.Dead);
+            scriptWrapper.getThread().stop();
+        }
     }
 
     @Override
     public ResponseEntity stopScriptExecution(Integer id) {
         ResponseEntity responseEntity;
         ScriptWrapper sw = scripts.get(id);
-        if (sw == null) responseEntity = new ResponseEntity(HttpStatus.NOT_FOUND);
-        else {
+        if (sw == null) {
+            responseEntity = new ResponseEntity(HttpStatus.NOT_FOUND);
+        } else {
             sw.getThread().stop();
             responseEntity = new ResponseEntity(HttpStatus.OK);
         }

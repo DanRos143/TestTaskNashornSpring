@@ -3,7 +3,6 @@ package rest.compiler;
 import org.springframework.stereotype.Component;
 
 import javax.script.*;
-import java.io.PrintWriter;
 
 
 @Component

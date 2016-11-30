@@ -23,6 +23,11 @@ public class ScriptEvalController {
         this.service = service;
     }
 
+    @GetMapping
+    public Iterable<ScriptWrapper> getLinks(){
+        return service.getLinks("/api/scripts/");
+    }
+
     @PostMapping
     public void scriptEval(@RequestParam(defaultValue = "false") boolean async,
                           @RequestBody String script,
@@ -38,9 +43,6 @@ public class ScriptEvalController {
         return service.stopScriptExecution(id);
     }
 
-    @GetMapping
-    public Iterable<ScriptWrapper> getLinks(){
-        return service.getLinks("/api/scripts/");
-    }
+
 
 }
