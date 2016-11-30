@@ -9,7 +9,6 @@ import java.util.concurrent.Future;
 public class ScriptWrapper {
     @JsonIgnore
     private String content;
-    private String location;
     private ScriptStatus status;
 
     @JsonIgnore
@@ -18,14 +17,6 @@ public class ScriptWrapper {
     public ScriptWrapper(String content) {
         this.content = content;
         this.status = ScriptStatus.Waiting;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
     }
 
     public Thread getThread() {

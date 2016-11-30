@@ -13,6 +13,8 @@ import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -111,9 +113,15 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public Iterable<ScriptWrapper> getLinks(String path) {
-        scripts.forEach((integer, scriptWrapper) -> scriptWrapper.setLocation(path + integer));
-        return scripts.values();
+    public Set<String> getLinks(String path) {
+        Set<String> links = new HashSet<>();
+        scripts.keySet().forEach(integer -> links.add(path + integer));
+        return links;
+    }
+
+    @Override
+    public ScriptWrapper getScriptInfo(Integer scriptId) {
+        return scripts.get(scriptId);
     }
 }
 

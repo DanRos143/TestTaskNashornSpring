@@ -5,6 +5,7 @@ import rest.script.ScriptWrapper;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 
@@ -17,5 +18,6 @@ public interface ScriptService {
 
     ResponseEntity stopScriptExecution(Integer id);
 
-    Iterable<ScriptWrapper> getLinks(String path);
+    Set<String> getLinks(String path);
+    ScriptWrapper getScriptInfo(Integer scriptId);
 }

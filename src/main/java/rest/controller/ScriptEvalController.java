@@ -1,7 +1,6 @@
 package rest.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rest.script.ScriptWrapper;
@@ -22,9 +21,13 @@ public class ScriptEvalController {
     public void setService(ScriptService service) {
         this.service = service;
     }
+    @GetMapping("{id}")
+    public ScriptWrapper getScriptInfo(@PathVariable Integer id){
+        return service.getScriptInfo(id);
+    }
 
     @GetMapping
-    public Iterable<ScriptWrapper> getLinks(){
+    public Set<String> getLinks(){
         return service.getLinks("/api/scripts/");
     }
 
@@ -42,7 +45,5 @@ public class ScriptEvalController {
     public ResponseEntity killScript(@PathVariable Integer id){
         return service.stopScriptExecution(id);
     }
-
-
 
 }
