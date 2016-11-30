@@ -8,6 +8,7 @@ import rest.compiler.ScriptCompiler;
 import rest.script.ScriptStatus;
 import rest.script.ScriptWrapper;
 
+import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
@@ -40,11 +41,13 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public Future<?> runAsynchronously(String script, HttpServletResponse response) throws IOException {
+    public Future<?> runAsynchronously(String script, HttpServletResponse response) throws IOException, ScriptException {
         Integer id = counter.incrementAndGet();
-        response.setHeader("Location", location + id);
         PrintWriter printWriter = response.getWriter();
         ScriptWrapper scriptWrapper = new ScriptWrapper(script);
+        CompiledScript compiledScript = compiler.compile(script);
+        response.setStatus(HttpServletResponse.SC_ACCEPTED);
+        response.setHeader("Location", location + id);
         Runnable r = () -> {
             try {
                 scriptWrapper.setThread(Thread.currentThread());
@@ -52,10 +55,9 @@ public class ScriptServiceImpl implements ScriptService {
                 scripts.put(id, scriptWrapper);
                 ScriptContext scriptContext = new SimpleScriptContext();
                 scriptContext.setWriter(printWriter);
-                compiler.compile(script).eval(scriptContext);
+                compiledScript.eval(scriptContext);
                 scriptWrapper.setStatus(ScriptStatus.Done);
             } catch (ScriptException e) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 printWriter.print(e.getLocalizedMessage());
             }
         };
@@ -63,13 +65,15 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public void runSynchronously(String script, HttpServletResponse response) throws IOException {
+    public void runSynchronously(String script, HttpServletResponse response) throws IOException, ScriptException {
         Integer id = counter.incrementAndGet();
-        response.setHeader("Location", location + id);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(baos, true);
         ScriptWrapper scriptWrapper = new ScriptWrapper(script);
         PrintWriter out = response.getWriter();
+        CompiledScript compiledScript = compiler.compile(script);
+        response.setStatus(HttpServletResponse.SC_ACCEPTED);
+        response.setHeader("Location", location + id);
         Future<?> future = executorService.submit(() -> {
             try {
                 scriptWrapper.setStatus(ScriptStatus.Running);
@@ -77,10 +81,9 @@ public class ScriptServiceImpl implements ScriptService {
                 scripts.put(id, scriptWrapper);
                 ScriptContext scriptContext = new SimpleScriptContext();
                 scriptContext.setWriter(printWriter);
-                compiler.compile(script).eval(scriptContext);
+                compiledScript.eval(scriptContext);
                 scriptWrapper.setStatus(ScriptStatus.Done);
             } catch (ScriptException e) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 printWriter.print(e.getLocalizedMessage());
             }
         });
