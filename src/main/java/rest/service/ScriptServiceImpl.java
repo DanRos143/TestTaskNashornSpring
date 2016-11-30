@@ -21,11 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class ScriptServiceImpl implements ScriptService {
     private final int NTHREADS = 10;
+    private String location = "/api/scripts/";
     private AtomicInteger counter = new AtomicInteger(0);
     private ConcurrentMap<Integer, ScriptWrapper> scripts =
             new ConcurrentHashMap<>();
     private ExecutorService executorService;
     private ScriptCompiler compiler;
+
 
     public ScriptServiceImpl() {
         this.executorService = Executors.newFixedThreadPool(NTHREADS);
@@ -38,8 +40,8 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Override
     public Future<?> runAsynchronously(String script, HttpServletResponse response) throws IOException {
-        int id = counter.incrementAndGet();
-        response.setHeader("Location", "/api/scripts/" + id);
+        Integer id = counter.incrementAndGet();
+        response.setHeader("Location", location + id);
         PrintWriter printWriter = response.getWriter();
         ScriptWrapper scriptWrapper = new ScriptWrapper(script);
         Runnable r = () -> {
@@ -61,18 +63,17 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Override
     public void runSynchronously(String script, HttpServletResponse response) throws IOException {
-        int id = counter.incrementAndGet();
-        response.setHeader("Location", "/api/scripts/" + id);
+        Integer id = counter.incrementAndGet();
+        response.setHeader("Location", location + id);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(baos, true);
         ScriptWrapper scriptWrapper = new ScriptWrapper(script);
-        ServletOutputStream out = response.getOutputStream();
-        Future<?> future = executorService.submit(() -> {//scriptWrapper, id, ctx, printWriter
+        PrintWriter out = response.getWriter();
+        Future<?> future = executorService.submit(() -> {
             try {
                 scriptWrapper.setStatus(ScriptStatus.Running);
                 scriptWrapper.setThread(Thread.currentThread());
                 scripts.put(id, scriptWrapper);
-
                 ScriptContext scriptContext = new SimpleScriptContext();
                 scriptContext.setWriter(printWriter);
                 compiler.compile(script).eval(scriptContext);
@@ -82,21 +83,17 @@ public class ScriptServiceImpl implements ScriptService {
                 printWriter.print(e.getLocalizedMessage());
             }
         });
-        while (true){//uses future, out, baos, scriptWrapper
-            try {
-                if (future.isDone()) {
-                    scripts.get(id).setStatus(ScriptStatus.Done);
-                    break;
-                }
-                out.write(baos.toByteArray());
-                baos.reset();
-                out.flush();
-            } catch (IOException e) {
-                scriptWrapper.setStatus(ScriptStatus.Dead);
-                scriptWrapper.getThread().stop();
+        while (!out.checkError()){
+            if (future.isDone()) {
+                scripts.get(id).setStatus(ScriptStatus.Done);
                 break;
             }
+            out.print(baos.toString());
+            baos.reset();
+            out.flush();
         }
+        scriptWrapper.setStatus(ScriptStatus.Dead);
+        scriptWrapper.getThread().stop();
     }
 
     @Override
@@ -117,3 +114,4 @@ public class ScriptServiceImpl implements ScriptService {
         return scripts.values();
     }
 }
+
