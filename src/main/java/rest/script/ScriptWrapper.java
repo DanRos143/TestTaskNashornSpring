@@ -1,22 +1,34 @@
 package rest.script;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.hateoas.ResourceSupport;
 
-import java.util.concurrent.Future;
+public class ScriptWrapper extends ResourceSupport {
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class ScriptWrapper {
+
+    private Integer identifier;
+
     @JsonIgnore
-    private String content;
+    private String body;
+
     private ScriptStatus status;
+
+    @JsonIgnore
+    private StringBuilder output;
+
 
     @JsonIgnore
     private Thread thread;
 
-    public ScriptWrapper(String content) {
-        this.content = content;
+    public ScriptWrapper(Integer id, String content) {
+        this.identifier = id;
+        this.body = content;
         this.status = ScriptStatus.Waiting;
+    }
+
+    public Integer getIdentifier() {
+        return identifier;
     }
 
     public Thread getThread() {
@@ -27,12 +39,20 @@ public class ScriptWrapper {
         this.thread = thread;
     }
 
-    public String getContent() {
-        return content;
+    public String getBody() {
+        return body;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public StringBuilder getOutput() {
+        return output;
+    }
+
+    public void setOutput(StringBuilder output) {
+        this.output = output;
     }
 
     public ScriptStatus getStatus() {
@@ -42,5 +62,8 @@ public class ScriptWrapper {
     public void setStatus(ScriptStatus status) {
         this.status = status;
     }
+
+
+
 
 }

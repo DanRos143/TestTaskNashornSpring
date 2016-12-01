@@ -1,3 +1,5 @@
+package rest.controller;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -37,8 +39,6 @@ public class RestTest {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
     }
 
-
-
     @Test
     public void evalScriptSyncronouslyTest() throws Exception {
         mockMvc.perform(post("/api/scripts/?async=false")
@@ -48,7 +48,6 @@ public class RestTest {
                 .andExpect(status().is(202));
 
     }
-
 
     @Test
     public void getAllLinks() throws Exception {
