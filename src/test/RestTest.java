@@ -48,15 +48,8 @@ public class RestTest {
                 .andExpect(status().is(202));
 
     }
-    @Test
-    public void evalScriptAsyncronouslyTest() throws Exception {
-        mockMvc.perform(post("/api/scripts/?async=true")
-                .content("print('test passed!'")
-                .contentType(MediaType.TEXT_HTML)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400));
 
-    }
+
     @Test
     public void getAllLinks() throws Exception {
         MvcResult result = mockMvc.perform(get("/api/scripts/").accept(MediaType.APPLICATION_JSON))
@@ -64,6 +57,16 @@ public class RestTest {
                 .andReturn();
         Assert.assertTrue(result.getResponse().getContentAsString() != null);
     }
+
+    @Test
+    public void badScriptResponseTest() throws Exception {
+        mockMvc.perform(post("/api/scripts/?async=true")
+                .content("print('test passed!'")
+                .contentType(MediaType.TEXT_HTML)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(400));
+    }
+
     @Test
     public void deleteScriptThatDoesntExistTest() throws Exception {
         mockMvc.perform(delete("/api/scripts/100"))
