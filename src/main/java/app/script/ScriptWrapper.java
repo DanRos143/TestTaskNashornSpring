@@ -1,22 +1,22 @@
-package rest.script;
+package app.script;
 
+import app.view.View;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.ResourceSupport;
 
+import java.util.List;
+
 public class ScriptWrapper extends ResourceSupport {
-
-
+    @JsonView(View.Rest.class)
     private Integer identifier;
-
-    @JsonIgnore
-    private String body;
-
+    @JsonView(View.Rest.class)
     private ScriptStatus status;
-
-    @JsonIgnore
+    @JsonView(View.Body.class)
+    private String body;
+    @JsonView(View.Output.class)
     private StringBuilder output;
-
 
     @JsonIgnore
     private Thread thread;
@@ -24,11 +24,12 @@ public class ScriptWrapper extends ResourceSupport {
     public ScriptWrapper(Integer id, String content) {
         this.identifier = id;
         this.body = content;
+        this.output = new StringBuilder();
         this.status = ScriptStatus.Waiting;
     }
 
     public Integer getIdentifier() {
-        return identifier;
+        return this.identifier;
     }
 
     public Thread getThread() {
@@ -63,7 +64,9 @@ public class ScriptWrapper extends ResourceSupport {
         this.status = status;
     }
 
-
-
-
+    @Override
+    @JsonView(View.Rest.class)
+    public List<Link> getLinks() {
+        return super.getLinks();
+    }
 }

@@ -1,4 +1,4 @@
-package rest.service;
+package app.service;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -6,10 +6,9 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import rest.controller.ScriptEvalController;
-import rest.compiler.ScriptCompiler;
-import rest.compiler.ScriptCompilerImpl;
-import rest.service.ScriptServiceImpl;
+import app.controller.ScriptController;
+import app.compiler.ScriptCompiler;
+import app.compiler.ScriptCompilerImpl;
 
 import javax.script.*;
 import java.io.ByteArrayOutputStream;
@@ -18,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, ScriptEvalController.class})
+@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, ScriptController.class})
 public class EvaluationServiceTest {
 
 

@@ -1,4 +1,4 @@
-package rest.compiler;
+package app.compiler;
 
 
 import org.junit.Test;
@@ -6,8 +6,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import rest.controller.ScriptEvalController;
-import rest.service.ScriptServiceImpl;
 
 import javax.script.Compilable;
 import javax.script.ScriptEngineManager;

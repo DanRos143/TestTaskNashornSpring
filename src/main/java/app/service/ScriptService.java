@@ -1,26 +1,29 @@
-package rest.service;
+package app.service;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
-import rest.script.ScriptWrapper;
+import app.script.ScriptWrapper;
 
+import javax.script.CompiledScript;
 import javax.script.ScriptException;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 
 public interface ScriptService {
-    void runAsynchronously(String script, ResponseBodyEmitter emitter)
+    void runAsynchronously(CompiledScript compiledScript, ScriptWrapper sW, ResponseBodyEmitter emitter)
             throws IOException, ScriptException;
 
-    void runSynchronously(String script, PrintWriter printWriter)
+    void runSynchronously(CompiledScript script, ScriptWrapper sW, OutputStream out)
             throws IOException, ScriptException;
 
     ResponseEntity stopScriptExecution(Integer id);
 
-    Set<String> getLinks(String path);
     ScriptWrapper getScriptInfo(Integer scriptId);
+
+    CompiledScript compile(String script) throws ScriptException;
+
+    void saveResource(Integer identifier, ScriptWrapper scriptWrapper);
 }
