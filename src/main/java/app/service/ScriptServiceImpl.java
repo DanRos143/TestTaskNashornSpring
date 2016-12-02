@@ -46,7 +46,7 @@ public class ScriptServiceImpl implements ScriptService {
             try {
                 compiledScript.eval(ctx);
             } catch (ScriptException e) {
-                //emitter.send(e.getMessage());
+                emitter.completeWithError(e);
             }
             sW.setStatus(ScriptStatus.Done);
             emitter.complete();

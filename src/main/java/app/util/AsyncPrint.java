@@ -19,9 +19,10 @@ public class AsyncPrint implements Function<Object, Void> {
         try {
             sb.append(msg);
             emitter.send(msg);
+            emitter.send("\n");
 
         } catch (IOException e) {
-            e.printStackTrace();
+            emitter.completeWithError(e);
         }
         return null;
     }
