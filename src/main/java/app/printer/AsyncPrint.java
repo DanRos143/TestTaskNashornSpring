@@ -1,4 +1,4 @@
-package app.util;
+package app.printer;
 
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 

@@ -1,4 +1,4 @@
-package app.util;
+package app.printer;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,7 +21,6 @@ public class SyncPrint implements Function<Object, Void> {
             writer.flush();
             sb.append(msg);
         } catch (IOException e) {
-            System.out.println(e.getMessage());
             Thread.currentThread().stop();
         }
         return null;

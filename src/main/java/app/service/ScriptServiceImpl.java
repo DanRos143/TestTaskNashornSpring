@@ -1,14 +1,14 @@
 package app.service;
 
+import app.script.Script;
 import app.script.ScriptStatus;
-import app.util.AsyncPrint;
-import app.util.SyncPrint;
+import app.printer.AsyncPrint;
+import app.printer.SyncPrint;
+import jdk.nashorn.internal.runtime.ECMAException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import app.compiler.ScriptCompiler;
-import app.script.ScriptWrapper;
 
 import javax.script.*;
 import java.io.*;
@@ -19,7 +19,7 @@ import java.util.concurrent.*;
 @Service
 public class ScriptServiceImpl implements ScriptService {
     private final int NTHREADS = 10;
-    private ConcurrentMap<Integer, ScriptWrapper> scripts =
+    private ConcurrentMap<Integer, Script> scripts =
             new ConcurrentHashMap<>();
     private ExecutorService executorService;
     private ScriptCompiler compiler;
@@ -34,56 +34,65 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public void runAsynchronously(CompiledScript compiledScript, ScriptWrapper sW, ResponseBodyEmitter emitter)
-            throws IOException {
+    public void runAsynchronously(CompiledScript compiledScript,
+                                  Script script,
+                                  ResponseBodyEmitter emitter) {
         executorService.submit(() -> {
             try {
-                sW.setThread(Thread.currentThread());
+                script.setThread(Thread.currentThread());
                 Bindings bindings = compiler.createBindings();
-                bindings.put("print", new AsyncPrint(emitter, sW.getOutput()));
-                sW.setStatus(ScriptStatus.Running);
+                bindings.put("print",
+                        new AsyncPrint(emitter, script.getOutput()));
+                script.setStatus(ScriptStatus.Running);
                 compiledScript.eval(bindings);
+                script.setStatus(ScriptStatus.Done);
+                emitter.complete();
             } catch (ScriptException e) {
-                sW.setStatus(ScriptStatus.Error);
-                emitter.completeWithError(e);
+                script.setStatus(ScriptStatus.Error);
+                script.getOutput().append(e.getMessage());
+                try {
+                    emitter.send(e.getMessage());
+                    emitter.complete();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
-            sW.setStatus(ScriptStatus.Done);
-            emitter.complete();
         });
     }
 
     @Override
-    public void runSynchronously(CompiledScript compiledScript,ScriptWrapper sW, OutputStream out) {
+    public void runSynchronously(CompiledScript compiledScript,
+                                 Script script,
+                                 OutputStream out) {
         try {
-            sW.setThread(Thread.currentThread());
+            script.setThread(Thread.currentThread());
             Bindings bindings = compiler.createBindings();
-            bindings.put("print", new SyncPrint(out, sW.getOutput()));
-            sW.setStatus(ScriptStatus.Running);
+            bindings.put("print",
+                    new SyncPrint(out, script.getOutput()));
+            script.setStatus(ScriptStatus.Running);
             compiledScript.eval(bindings);
+            script.setStatus(ScriptStatus.Done);
         } catch (ScriptException e) {
-            sW.setStatus(ScriptStatus.Error);
-            e.printStackTrace();
+            script.setStatus(ScriptStatus.Error);
+            script.getOutput().append(e.getMessage());
         }
-        sW.setStatus(ScriptStatus.Done);
     }
 
     @Override
-    public ResponseEntity stopScriptExecution(Integer id) {
-        ResponseEntity responseEntity;
-        ScriptWrapper sw = scripts.get(id);
-        if (sw == null) {
-            responseEntity = ResponseEntity.notFound().build();
+    public boolean stopScriptExecution(Integer id) {
+        Script script = scripts.get(id);
+        if (script == null) {
+            return false;
         } else {
-            sw.getThread().stop();
+            script.getThread().stop();
             scripts.remove(id);
-            responseEntity = ResponseEntity.ok().build();
+            return true;
         }
-        return responseEntity;
     }
 
     @Override
-    public ScriptWrapper getScriptInfo(Integer scriptId) {
-        return scripts.get(scriptId);
+    public Script getScript(Integer id) {
+        return scripts.get(id);
     }
 
     @Override
@@ -91,16 +100,15 @@ public class ScriptServiceImpl implements ScriptService {
         return compiler.compile(script);
     }
 
-    @Override//?? duplicated id
-    public void saveResource(Integer identifier, ScriptWrapper scriptWrapper) {
-        scripts.put(identifier, scriptWrapper);
+    @Override
+    public void saveScript(Integer identifier, Script script) {
+        scripts.put(identifier, script);
     }
 
     @Override
-    public Collection<ScriptWrapper> getScriptWrappers() {
+    public Collection<Script> getScripts() {
         return scripts.values();
     }
-
 
 }
 

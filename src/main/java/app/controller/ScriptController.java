@@ -1,32 +1,34 @@
 package app.controller;
 
+import app.script.Script;
+import app.script.ScriptResource;
+import app.script.ScriptResourceAssembler;
+import app.script.ScriptStatus;
 import app.view.View;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.ExposesResourceFor;
 import org.springframework.hateoas.Resources;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
-import app.script.ScriptWrapper;
 import app.service.ScriptService;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 
 import javax.script.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
 @RestController
 @RequestMapping(value = "/api/scripts")
-@ExposesResourceFor(ScriptWrapper.class)
+@ExposesResourceFor(Script.class)
 public class ScriptController {
     private AtomicInteger counter = new AtomicInteger(0);
+    private ScriptResourceAssembler assembler = new ScriptResourceAssembler();
     private ScriptService service;
 
     @Autowired
@@ -35,103 +37,114 @@ public class ScriptController {
     }
 
     @GetMapping(produces = "application/hal+json")
-    public Resources<ScriptWrapper> getAll(){//temporary void
-        //Collection<ScriptWrapper> scriptWrappers = service.getScriptWrappers();
-        //Resources<ScriptWrapper> scriptWrapperResources = Resources.wrap()
-        return null;
+    @JsonView(View.Rest.class)
+    public Resources<ScriptResource> getAll(){
+        return new Resources<>(
+                assembler.toResources(service.getScripts()),
+                linkTo(ScriptController.class).withSelfRel(),
+                linkTo(ScriptController.class)
+                        .slash("async").withRel("runAsync"),
+                linkTo(ScriptController.class)
+                        .slash("sync").withRel("runSync")
+        );
     }
 
     @GetMapping(value = "/{id}", produces = "application/hal+json")
     @JsonView(View.Rest.class)
-    public ResponseEntity getScriptInfo(@PathVariable Integer id){
-        ResponseEntity responseEntity;
-        ScriptWrapper scriptWrapper = service.getScriptInfo(id);
-        if (scriptWrapper == null) responseEntity = ResponseEntity.notFound().build();
-        else {
-            if (scriptWrapper.getLinks().isEmpty()){
-                scriptWrapper.add(
-                        linkTo(methodOn(ScriptController.class).getScriptInfo(id)).slash(id).withSelfRel(),
-                        linkTo(methodOn(ScriptController.class).getScriptOutput(id)).slash(id + "/output").withRel("output"),
-                        linkTo(methodOn(ScriptController.class).getScriptBody(id)).slash(id + "/body").withRel("body"),
-                        linkTo(methodOn(ScriptController.class).killScript(id)).slash(id).withRel("delete")
-                );
-            }
-            responseEntity = ResponseEntity.ok(scriptWrapper);
-        }
-        return responseEntity;
+    public ResponseEntity getScript(@PathVariable Integer id){
+        return createResponseEntity(id, "rest");
+    }
+
+    @GetMapping(value = "/{id}/body", produces = "application/hal+json")
+    @JsonView(View.Body.class)
+    public ResponseEntity getScriptBody(@PathVariable Integer id){
+        return createResponseEntity(id, "body");
+    }
+
+    @GetMapping(value = "/{id}/output", produces = "application/hal+json")
+    @JsonView(View.Output.class)
+    public ResponseEntity getScriptOutput(@PathVariable Integer id){
+        return createResponseEntity(id, "output");
     }
 
     @PostMapping(value = "/async", consumes = "text/plain", produces = "text/plain")
-    public ResponseBodyEmitter asyncScriptEval(@RequestBody String script,
-                                          HttpServletResponse response)
-            throws IOException, ExecutionException, InterruptedException {
+    public ResponseEntity<ResponseBodyEmitter> asyncScriptEval(@RequestBody String body)
+            throws IOException {
+        ResponseEntity<ResponseBodyEmitter> entity = null;
         ResponseBodyEmitter emitter = new ResponseBodyEmitter(-1L);
-        CompiledScript compiledScript = null;
+        Script script;
         try {
-             compiledScript = service.compile(script);
+            CompiledScript compiledScript = service.compile(body);
+            script = new Script(counter.incrementAndGet(), body);
+            service.saveScript(script.getId(), script);
+            service.runAsynchronously(compiledScript, script, emitter);
+            entity = ResponseEntity.created(UriComponentsBuilder
+                    .fromPath("/api/scripts/{id}")
+                    .buildAndExpand(script.getId())
+                    .toUri()).body(emitter);
         } catch (ScriptException e) {
-            emitter.completeWithError(e);
+            entity = ResponseEntity.badRequest().body(emitter);
+            emitter.send(e.getMessage() + "\n");
+            emitter.complete();
         }
-        ScriptWrapper sW = new ScriptWrapper(counter.incrementAndGet(), script);
-        service.saveResource(sW.getIdentifier(), sW);
-        try {
-            service.runAsynchronously(compiledScript, sW, emitter);
-        } catch (ScriptException e) {
-            emitter.completeWithError(e);
-        }
-        return emitter;
+        return entity;
     }
 
-    //it is working, but needs to be refactored later
     @PostMapping(value = "/sync", consumes = "text/plain", produces = "text/plain")
-    public void syncScriptEval(@RequestBody String script,
-                                          HttpServletResponse response) throws IOException, ScriptException {
-        OutputStream out = response.getOutputStream();
-        CompiledScript compiledScript = null;
+    public void syncScriptEval(@RequestBody String body, HttpServletResponse response) throws IOException {
         try {
-            compiledScript = service.compile(script);
+            CompiledScript compiledScript = service.compile(body);
+            Script script = new Script(counter.incrementAndGet(), body);
+            service.saveScript(script.getId(), script);
+            response.setStatus(HttpServletResponse.SC_CREATED);
+            response.setHeader("Location", "/api/scripts/" + script.getId());
+            response.getOutputStream().flush();
+            service.runSynchronously(compiledScript, script, response.getOutputStream());
         } catch (ScriptException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-        ScriptWrapper scriptWrapper = new ScriptWrapper(counter.incrementAndGet(), script);
-        response.setStatus(HttpServletResponse.SC_CREATED);
-        response.setHeader("Location", "/api/scripts/" + scriptWrapper.getIdentifier());
-        out.flush();
-        service.saveResource(scriptWrapper.getIdentifier(), scriptWrapper);
-        service.runSynchronously(compiledScript, scriptWrapper, out);
-    }
-    //big mistake, because there should be other links: rel=self should point on {id}/body and so on
-    @GetMapping("/{id}/body")
-    @JsonView(View.Body.class)
-    public ResponseEntity getScriptBody(@PathVariable Integer id){
-        return buildOkOrNotFound(id);
-    }
-
-    @GetMapping("/{id}/output")
-    @JsonView(View.Output.class)
-    public ResponseEntity getScriptOutput(@PathVariable Integer id){
-        return buildOkOrNotFound(id);
     }
 
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity killScript(@PathVariable Integer id){
-        return service.stopScriptExecution(id);
+    public ResponseEntity stopScriptExecution(@PathVariable Integer id){
+        boolean found = service.stopScriptExecution(id);
+        if (found) return ResponseEntity.ok().build();
+        else return ResponseEntity.notFound().build();
     }
 
-    @ExceptionHandler(ScriptException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public void handleScripException(PrintWriter printWriter, ScriptException se){
-        printWriter.println(se.getMessage());
-        printWriter.flush();
-        System.out.println(se.getMessage());
-    }
-
-    private ResponseEntity buildOkOrNotFound(Integer id){
-        ResponseEntity responseEntity;
-        ScriptWrapper scriptWrapper = service.getScriptInfo(id);
-        if (scriptWrapper == null) responseEntity = ResponseEntity.notFound().build();
-        else responseEntity = ResponseEntity.ok(scriptWrapper);
-        return responseEntity;
+    private ResponseEntity createResponseEntity(Integer id, String type){
+        ResponseEntity entity;
+        Script script = service.getScript(id);
+        if (script == null) entity = ResponseEntity.notFound().build();
+        else {
+            ScriptResource resource = assembler.toResource(script);
+            switch (type){
+                case "rest":
+                    resource.add(
+                            linkTo(methodOn(ScriptController.class).getScriptOutput(id))
+                                    .slash(id + "/output").withRel("output"),
+                            linkTo(methodOn(ScriptController.class).getScriptBody(id))
+                                    .slash(id + "/body").withRel("body")
+                    );
+                    if (!resource.getStatus().equals(ScriptStatus.Done) &&
+                            !resource.getStatus().equals(ScriptStatus.Error))
+                        resource.add(linkTo(methodOn(ScriptController.class).stopScriptExecution(id))
+                                .slash(id).withRel("stop"));
+                    break;
+                case "body":
+                    resource.getLinks().clear();
+                    resource.add(linkTo(methodOn(ScriptController.class).getScriptBody(id))
+                            .slash(id).withSelfRel());
+                    break;
+                case "output":
+                    resource.getLinks().clear();
+                    resource.add(linkTo(methodOn(ScriptController.class).getScriptOutput(id))
+                            .slash(id + "/output").withSelfRel());
+                    break;
+            }
+            entity = ResponseEntity.ok(resource);
+        }
+        return entity;
     }
 
 }
