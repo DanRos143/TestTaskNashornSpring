@@ -12,13 +12,13 @@ import app.script.ScriptWrapper;
 
 import javax.script.*;
 import java.io.*;
+import java.util.Collection;
 import java.util.concurrent.*;
 
 
 @Service
 public class ScriptServiceImpl implements ScriptService {
     private final int NTHREADS = 10;
-    /*private AtomicInteger counter = new AtomicInteger(0);*/
     private ConcurrentMap<Integer, ScriptWrapper> scripts =
             new ConcurrentHashMap<>();
     private ExecutorService executorService;
@@ -35,35 +35,35 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Override
     public void runAsynchronously(CompiledScript compiledScript, ScriptWrapper sW, ResponseBodyEmitter emitter)
-            throws IOException, ScriptException {
+            throws IOException {
         executorService.submit(() -> {
-            sW.setThread(Thread.currentThread());
-            ScriptContext ctx = new SimpleScriptContext();
-            Bindings bindings = compiler.getBindings();
-            bindings.put("print", new AsyncPrint(emitter, sW.getOutput()));
-            ctx.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-            sW.setStatus(ScriptStatus.Running);
             try {
-                compiledScript.eval(ctx);
+                sW.setThread(Thread.currentThread());
+                Bindings bindings = compiler.createBindings();
+                bindings.put("print", new AsyncPrint(emitter, sW.getOutput()));
+                sW.setStatus(ScriptStatus.Running);
+                compiledScript.eval(bindings);
             } catch (ScriptException e) {
+                sW.setStatus(ScriptStatus.Error);
                 emitter.completeWithError(e);
             }
             sW.setStatus(ScriptStatus.Done);
             emitter.complete();
         });
-
-
     }
 
     @Override
-    public void runSynchronously(CompiledScript compiledScript,ScriptWrapper sW, OutputStream out) throws ScriptException {
-        sW.setThread(Thread.currentThread());
-        ScriptContext ctx = new SimpleScriptContext();
-        Bindings bindings = compiler.getBindings();
-        bindings.put("print", new SyncPrint(out, sW.getOutput()));
-        ctx.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-        sW.setStatus(ScriptStatus.Running);
-        compiledScript.eval(ctx);
+    public void runSynchronously(CompiledScript compiledScript,ScriptWrapper sW, OutputStream out) {
+        try {
+            sW.setThread(Thread.currentThread());
+            Bindings bindings = compiler.createBindings();
+            bindings.put("print", new SyncPrint(out, sW.getOutput()));
+            sW.setStatus(ScriptStatus.Running);
+            compiledScript.eval(bindings);
+        } catch (ScriptException e) {
+            sW.setStatus(ScriptStatus.Error);
+            e.printStackTrace();
+        }
         sW.setStatus(ScriptStatus.Done);
     }
 
@@ -96,14 +96,11 @@ public class ScriptServiceImpl implements ScriptService {
         scripts.put(identifier, scriptWrapper);
     }
 
-    /*private ScriptContext createContext(boolean async){
+    @Override
+    public Collection<ScriptWrapper> getScriptWrappers() {
+        return scripts.values();
+    }
 
-        if (async){
-
-        } else {
-
-        }
-    }*/
 
 }
 

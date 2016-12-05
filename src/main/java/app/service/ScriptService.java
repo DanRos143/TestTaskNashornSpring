@@ -8,8 +8,7 @@ import javax.script.CompiledScript;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.util.Set;
+import java.util.Collection;
 
 
 public interface ScriptService {
@@ -26,4 +25,6 @@ public interface ScriptService {
     CompiledScript compile(String script) throws ScriptException;
 
     void saveResource(Integer identifier, ScriptWrapper scriptWrapper);
+
+    Collection<ScriptWrapper> getScriptWrappers();
 }

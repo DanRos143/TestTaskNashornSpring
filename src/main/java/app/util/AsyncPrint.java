@@ -17,10 +17,8 @@ public class AsyncPrint implements Function<Object, Void> {
     @Override
     public Void apply(Object msg) {
         try {
+            emitter.send(msg + "\n");
             sb.append(msg);
-            emitter.send(msg);
-            emitter.send("\n");
-
         } catch (IOException e) {
             emitter.completeWithError(e);
         }

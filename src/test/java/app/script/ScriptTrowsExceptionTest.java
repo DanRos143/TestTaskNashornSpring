@@ -44,12 +44,20 @@ public class ScriptTrowsExceptionTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         NashornScriptEngine nashorn = (NashornScriptEngine)
                 new ScriptEngineManager().getEngineByName("nashorn");
-        Bindings bindings = nashorn.getBindings(ScriptContext.ENGINE_SCOPE);
-        bindings.remove("print");
-        ScriptContext ctx = new SimpleScriptContext();
-        ctx.setBindings(nashorn.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
+        //ScriptContext sc = new SimpleScriptContext();
+        //Bindings bindings = new SimpleBindings();
+        //bindings.remove("print");
+        Bindings bindings = nashorn.createBindings();
+        System.out.println(bindings.get("print"));
+        bindings.put("print", new SyncPrint(baos, sb));
+        System.out.println(bindings.get("print"));
+
+        nashorn.eval("print(3)", bindings);
+
+        /*ScriptContext ctx = new SimpleScriptContext();
+        ctx.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
         ctx.getBindings(ScriptContext.ENGINE_SCOPE).put("print", new SyncPrint(baos, sb));
-        nashorn.eval("print(4)", ctx);
+        nashorn.eval("print(4)", ctx);*/
     }
 
 }
