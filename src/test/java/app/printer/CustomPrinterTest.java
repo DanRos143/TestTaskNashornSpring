@@ -55,12 +55,6 @@ public class CustomPrinterTest {
         t2.join();
         Assert.assertTrue(baos1.toString().equals(baos2.toString()));
     }
-    /*
-    @Test
-    public void testJSPrintAsyncModeOverride(){
-        ResponseBodyEmitter emitter = new ResponseBodyEmitter();
-        emitter.toString()
-    }*/
 
     @Test(expected = ScriptException.class)
     public void blockJSPrintFunctionTest() throws ScriptException {

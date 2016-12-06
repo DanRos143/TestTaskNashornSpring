@@ -5,6 +5,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter
 
 import javax.script.CompiledScript;
 import javax.script.ScriptException;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 
@@ -15,7 +16,7 @@ public interface ScriptService {
                            ResponseBodyEmitter emitter);
     void runSynchronously(CompiledScript compiledScript,
                           Script script,
-                          OutputStream out);
+                          OutputStream out) throws IOException;
     void saveScript(Integer identifier, Script script);
     boolean stopScriptExecution(Integer id);
     Script getScript(Integer Id);

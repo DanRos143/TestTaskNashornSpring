@@ -2,15 +2,15 @@ package app.script;
 
 import app.view.View;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.ResourceSupport;
 
+@JsonPropertyOrder({"id","status", "body","output", "_links"})
+public class ScriptResource extends ResourceSupport {
 
-public class ScriptResource extends Resource<Script> {
-
-    @JsonProperty("id")
     @JsonView(View.Rest.class)
+    @JsonProperty("id")
     private Integer identifier;
     @JsonView(View.Rest.class)
     private ScriptStatus status;
@@ -20,15 +20,6 @@ public class ScriptResource extends Resource<Script> {
     private StringBuilder output;
 
     public ScriptResource(){
-        super(new Script());
-    }
-
-    public ScriptResource(Script content, Link... links) {
-        super(content, links);
-    }
-
-    public ScriptResource(Script content, Iterable<Link> links) {
-        super(content, links);
     }
 
     public String getBody() {

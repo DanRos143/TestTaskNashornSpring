@@ -15,7 +15,6 @@ import static org.hamcrest.core.Is.is;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ScriptController.class, ScriptServiceImpl.class, ScriptCompilerImpl.class})
 public class ResourceAssemblerTest {
-
     private ScriptResourceAssembler assembler = new ScriptResourceAssembler();
 
 

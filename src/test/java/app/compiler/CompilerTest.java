@@ -1,14 +1,15 @@
 package app.compiler;
 
 
+import app.script.Script;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.script.Compilable;
-import javax.script.ScriptEngineManager;
+import javax.script.CompiledScript;
 import javax.script.ScriptException;
 
 
@@ -18,27 +19,27 @@ public class CompilerTest {
 
 
     @Autowired
-    private ScriptCompiler scriptCompiler;
+    private ScriptCompiler compiler;
 
-    @Test
-    public void runtimeExceptionAppearenceTest(){
-        String notAValidScript = "print(";
-        Compilable nashorn = (Compilable) new ScriptEngineManager().getEngineByName("nashorn");
-        try {
-            nashorn.compile(notAValidScript);
-        } catch (ScriptException sc) {
-            System.out.println(sc.getMessage());
-        }
+
+    @Test(expected = ScriptException.class)
+    public void getCompilationException() throws ScriptException {
+        String invalidScript = "print(";
+        compiler.compile(invalidScript);
     }
 
-
-    @Test
-    public void getExceptionViaCompiler(){
-        String notAValidScript = "print(";
+    @Test(expected = ScriptException.class)
+    public void getRuntimeScriptException() throws ScriptException {
+        String validForCompilation = "log(5)";
+        String compileError = null;
+        CompiledScript compiledScript = null;
         try {
-            scriptCompiler.compile(notAValidScript);
+            compiledScript = compiler.compile(validForCompilation);
         } catch (ScriptException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
+            compileError = e.getMessage();
         }
+        compiledScript.eval();
+        Assert.assertEquals(compileError, null);
     }
 }

@@ -4,7 +4,6 @@ import app.script.Script;
 import app.script.ScriptStatus;
 import app.printer.AsyncPrint;
 import app.printer.SyncPrint;
-import jdk.nashorn.internal.runtime.ECMAException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
@@ -47,14 +46,14 @@ public class ScriptServiceImpl implements ScriptService {
                 compiledScript.eval(bindings);
                 script.setStatus(ScriptStatus.Done);
                 emitter.complete();
-            } catch (ScriptException e) {
+            } catch (ScriptException se) {
                 script.setStatus(ScriptStatus.Error);
-                script.getOutput().append(e.getMessage());
+                script.getOutput().append(se.getMessage());
                 try {
-                    emitter.send(e.getMessage());
+                    emitter.send(se.getMessage());
                     emitter.complete();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -63,7 +62,7 @@ public class ScriptServiceImpl implements ScriptService {
     @Override
     public void runSynchronously(CompiledScript compiledScript,
                                  Script script,
-                                 OutputStream out) {
+                                 OutputStream out) throws IOException {
         try {
             script.setThread(Thread.currentThread());
             Bindings bindings = compiler.createBindings();
@@ -75,6 +74,7 @@ public class ScriptServiceImpl implements ScriptService {
         } catch (ScriptException e) {
             script.setStatus(ScriptStatus.Error);
             script.getOutput().append(e.getMessage());
+            out.write(e.getMessage().getBytes());
         }
     }
 

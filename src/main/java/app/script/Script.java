@@ -1,21 +1,13 @@
 package app.script;
 
-import app.view.View;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.hateoas.Identifiable;
 
 
 public class Script implements Identifiable<Integer> {
-    @JsonView(View.Rest.class)
     private Integer id;
-    @JsonView(View.Rest.class)
     private ScriptStatus status;
-    @JsonView(View.Body.class)
     private String body;
-    @JsonView(View.Output.class)
     private StringBuilder output;
-    @JsonIgnore
     private Thread thread;
 
     public Script(Integer id, String body) {

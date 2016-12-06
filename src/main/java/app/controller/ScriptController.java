@@ -70,7 +70,7 @@ public class ScriptController {
     @PostMapping(value = "/async", consumes = "text/plain", produces = "text/plain")
     public ResponseEntity<ResponseBodyEmitter> asyncScriptEval(@RequestBody String body)
             throws IOException {
-        ResponseEntity<ResponseBodyEmitter> entity = null;
+        ResponseEntity<ResponseBodyEmitter> entity;
         ResponseBodyEmitter emitter = new ResponseBodyEmitter(-1L);
         Script script;
         try {
@@ -91,17 +91,20 @@ public class ScriptController {
     }
 
     @PostMapping(value = "/sync", consumes = "text/plain", produces = "text/plain")
-    public void syncScriptEval(@RequestBody String body, HttpServletResponse response) throws IOException {
+    public void syncScriptEval(@RequestBody String body, HttpServletResponse response)
+            throws IOException {
+        OutputStream out = response.getOutputStream();
         try {
             CompiledScript compiledScript = service.compile(body);
             Script script = new Script(counter.incrementAndGet(), body);
             service.saveScript(script.getId(), script);
             response.setStatus(HttpServletResponse.SC_CREATED);
             response.setHeader("Location", "/api/scripts/" + script.getId());
-            response.getOutputStream().flush();
-            service.runSynchronously(compiledScript, script, response.getOutputStream());
+            out.flush();
+            service.runSynchronously(compiledScript, script, out);
         } catch (ScriptException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            out.write(e.getMessage().getBytes());
         }
     }
 
