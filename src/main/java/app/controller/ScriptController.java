@@ -43,9 +43,9 @@ public class ScriptController {
                 assembler.toResources(service.getScripts()),
                 linkTo(ScriptController.class).withSelfRel(),
                 linkTo(ScriptController.class)
-                        .slash("async").withRel("runAsync"),
+                        .slash("async").withRel("asyncExecution"),
                 linkTo(ScriptController.class)
-                        .slash("sync").withRel("runSync")
+                        .slash("sync").withRel("syncExecution")
         );
     }
 
