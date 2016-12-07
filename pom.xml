@@ -122,20 +122,7 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <!--<plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>app.Application</mainClass>
-                </configuration>
-            </plugin>-->
         </plugins>
     </build>
 
 </project>
-<!--
-<dependency>
-<groupId>org.springframework.boot</groupId>
-<artifactId>spring-boot-starter-tomcat</artifactId>
-<scope>provided</scope>
-</dependency> -->
