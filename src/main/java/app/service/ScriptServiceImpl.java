@@ -38,13 +38,7 @@ public class ScriptServiceImpl implements ScriptService {
                                   ResponseBodyEmitter emitter) {
         executorService.submit(() -> {
             try {
-                script.setThread(Thread.currentThread());
-                Bindings bindings = compiler.createBindings();
-                bindings.put("print",
-                        new AsyncPrint(emitter, script.getOutput()));
-                script.setStatus(ScriptStatus.Running);
-                compiledScript.eval(bindings);
-                script.setStatus(ScriptStatus.Done);
+                createBindingsAndRun(compiledScript, script, emitter, null);
                 emitter.complete();
             } catch (ScriptException se) {
                 script.setStatus(ScriptStatus.Error);
@@ -64,13 +58,7 @@ public class ScriptServiceImpl implements ScriptService {
                                  Script script,
                                  OutputStream out) throws IOException {
         try {
-            script.setThread(Thread.currentThread());
-            Bindings bindings = compiler.createBindings();
-            bindings.put("print",
-                    new SyncPrint(out, script.getOutput()));
-            script.setStatus(ScriptStatus.Running);
-            compiledScript.eval(bindings);
-            script.setStatus(ScriptStatus.Done);
+            createBindingsAndRun(compiledScript, script, null, out);
         } catch (ScriptException e) {
             script.setStatus(ScriptStatus.Error);
             script.getOutput().append(e.getMessage());
@@ -110,5 +98,22 @@ public class ScriptServiceImpl implements ScriptService {
         return scripts.values();
     }
 
+    private void createBindingsAndRun(CompiledScript compiledScript,
+                                      Script script,
+                                      ResponseBodyEmitter emitter,
+                                      OutputStream out) throws ScriptException {
+        script.setThread(Thread.currentThread());
+        Bindings bindings = compiler.createBindings();
+        if (out == null) bindings.put("print",
+                new AsyncPrint(emitter, script.getOutput()));
+        else bindings.put("print",
+                new SyncPrint(out, script.getOutput()));
+        script.setStatus(ScriptStatus.Running);
+        long begin = System.currentTimeMillis();
+        compiledScript.eval(bindings);
+        long end = System.currentTimeMillis();
+        script.setExecutionTime(end - begin);
+        script.setStatus(ScriptStatus.Done);
+    }
 }
 

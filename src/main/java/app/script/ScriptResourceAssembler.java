@@ -16,6 +16,7 @@ public class ScriptResourceAssembler extends ResourceAssemblerSupport<Script, Sc
         resource.setStatus(script.getStatus());
         resource.setBody(script.getBody());
         resource.setOutput(script.getOutput());
+        resource.setExecutionTime(script.getExecutionTime());
         return resource;
     }
 }

@@ -25,7 +25,7 @@ public class CustomPrinterTest {
     ScriptCompiler compiler;
 
     @Test
-    public void testJSPrintSyncModeOverride() throws InterruptedException {
+    public void testJSPrintSyncModeOverride() throws InterruptedException, ScriptException {
         String body = "for(var i = 0; i<5;i++) print(i);";
         StringBuilder sb1 = new StringBuilder();
         StringBuilder sb2 = new StringBuilder();
@@ -35,24 +35,8 @@ public class CustomPrinterTest {
         Bindings b2 = compiler.createBindings();
         b1.put("print", new SyncPrint(baos1, sb1));
         b2.put("print", new SyncPrint(baos2, sb2));
-        Thread t1 = new Thread(() -> {
-            try {
-                compiler.compile(body).eval(b1);
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            }
-        });
-        Thread t2 = new Thread(() -> {
-            try {
-                compiler.compile(body).eval(b2);
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            }
-        });
-        t1.start();
-        t2.start();
-        t1.join();
-        t2.join();
+        compiler.compile(body).eval(b1);
+        compiler.compile(body).eval(b2);
         Assert.assertTrue(baos1.toString().equals(baos2.toString()));
     }
 

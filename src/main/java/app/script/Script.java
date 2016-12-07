@@ -8,7 +8,9 @@ public class Script implements Identifiable<Integer> {
     private ScriptStatus status;
     private String body;
     private StringBuilder output;
+    private long executionTime;
     private Thread thread;
+
 
     public Script(Integer id, String body) {
         this.id = id;
@@ -45,6 +47,14 @@ public class Script implements Identifiable<Integer> {
 
     public void setOutput(StringBuilder output) {
         this.output = output;
+    }
+
+    public long getExecutionTime() {
+        return executionTime;
+    }
+
+    public void setExecutionTime(long executionTime) {
+        this.executionTime = executionTime;
     }
 
     public Thread getThread() {

@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.hateoas.ResourceSupport;
 
+import java.util.concurrent.TimeUnit;
+
 @JsonPropertyOrder({"id","status", "body","output", "_links"})
 public class ScriptResource extends ResourceSupport {
 
@@ -18,6 +20,12 @@ public class ScriptResource extends ResourceSupport {
     private String body;
     @JsonView(View.Output.class)
     private StringBuilder output;
+
+    @JsonView(View.Rest.class)
+    private long executionTime;
+
+    @JsonView(View.Rest.class)
+    private final String units = TimeUnit.MILLISECONDS.name();
 
     public ScriptResource(){
     }
@@ -53,5 +61,17 @@ public class ScriptResource extends ResourceSupport {
 
     public void setOutput(StringBuilder output) {
         this.output = output;
+    }
+
+    public long getExecutionTime() {
+        return executionTime;
+    }
+
+    public void setExecutionTime(long executionTime) {
+        this.executionTime = executionTime;
+    }
+
+    public String getUnits() {
+        return units;
     }
 }

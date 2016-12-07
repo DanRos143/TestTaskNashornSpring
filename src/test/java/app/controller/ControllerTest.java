@@ -118,6 +118,7 @@ public class ControllerTest {
         String location = mvcResult.getResponse().getHeader("Location");
         Assert.assertNotNull(location);
         mockMvc.perform(delete(location))
+                .andDo(print())
                 .andExpect(status().isOk());
         mockMvc.perform(delete("/api/scripts/1000"))
                 .andExpect(status().isNotFound());
@@ -129,8 +130,8 @@ public class ControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._links.self.href").value("http://localhost/api/scripts"))
-                .andExpect(jsonPath("$._links.runAsync.href").value("http://localhost/api/scripts/async"))
-                .andExpect(jsonPath("$._links.runSync.href").value("http://localhost/api/scripts/sync"));
+                .andExpect(jsonPath("$._links.asyncExecution.href").value("http://localhost/api/scripts/async"))
+                .andExpect(jsonPath("$._links.syncExecution.href").value("http://localhost/api/scripts/sync"));
     }
     @Test
     public void getSingleScriptTest() throws Exception {
