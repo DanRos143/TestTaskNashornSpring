@@ -109,22 +109,6 @@ public class ControllerTest {
                 .andExpect(content().string(errorMessage));
     }
     @Test
-    public void blockScriptExecutionTest() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(post("/api/scripts/async")
-                .contentType(MediaType.TEXT_PLAIN)
-                .accept(MediaType.TEXT_PLAIN)
-                .content("while(true){}"))
-                .andExpect(status().isCreated())
-                .andReturn();
-        String location = mvcResult.getResponse().getHeader("Location");
-        Assert.assertNotNull(location);
-        mockMvc.perform(delete(location))
-                .andDo(print())
-                .andExpect(status().isOk());
-        mockMvc.perform(delete("/api/scripts/1000"))
-                .andExpect(status().isNotFound());
-    }
-    @Test
     public void getAllScriptsTest() throws  Exception{
         String uri = "/api/scripts";
         mockMvc.perform(get(uri).accept("application/hal+json"))
