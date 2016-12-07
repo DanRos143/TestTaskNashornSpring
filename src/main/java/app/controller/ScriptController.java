@@ -68,24 +68,20 @@ public class ScriptController {
     }
 
     @PostMapping(value = "/async", consumes = "text/plain", produces = "text/plain")
-    public ResponseEntity<ResponseBodyEmitter> asyncScriptEval(@RequestBody String body)
+    public ResponseEntity asyncScriptEval(@RequestBody String body)
             throws IOException {
-        ResponseEntity<ResponseBodyEmitter> entity;
-        ResponseBodyEmitter emitter = new ResponseBodyEmitter(-1L);
-        Script script;
+        ResponseEntity entity;
         try {
             CompiledScript compiledScript = service.compile(body);
-            script = new Script(counter.incrementAndGet(), body);
+            Script script = new Script(counter.incrementAndGet(), body);
             service.saveScript(script.getId(), script);
-            service.runAsynchronously(compiledScript, script, emitter);
+            service.runAsynchronously(compiledScript, script);
             entity = ResponseEntity.created(UriComponentsBuilder
                     .fromPath("/api/scripts/{id}")
                     .buildAndExpand(script.getId())
-                    .toUri()).body(emitter);
+                    .toUri()).build();
         } catch (ScriptException e) {
-            entity = ResponseEntity.badRequest().body(emitter);
-            emitter.send(e.getMessage() + "\n");
-            emitter.complete();
+            entity = ResponseEntity.badRequest().body(e.getMessage());
         }
         return entity;
     }
@@ -114,6 +110,11 @@ public class ScriptController {
         if (found) return ResponseEntity.ok().build();
         else return ResponseEntity.notFound().build();
     }
+
+    /*@ExceptionHandler
+    public void handleException(){
+
+    }*/
 
     private ResponseEntity createResponseEntity(Integer id, String type){
         ResponseEntity entity;

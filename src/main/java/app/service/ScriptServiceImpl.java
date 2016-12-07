@@ -2,22 +2,23 @@ package app.service;
 
 import app.script.Script;
 import app.script.ScriptStatus;
-import app.printer.AsyncPrint;
-import app.printer.SyncPrint;
+import app.writer.SyncWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import app.compiler.ScriptCompiler;
 
 import javax.script.*;
 import java.io.*;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 
 @Service
 public class ScriptServiceImpl implements ScriptService {
-    private final int NTHREADS = 10;
+    //@Value("${numberOfThreads}")
+    private int NTHREADS = 10;
     private ConcurrentMap<Integer, Script> scripts =
             new ConcurrentHashMap<>();
     private ExecutorService executorService;
@@ -34,23 +35,15 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Override
     public void runAsynchronously(CompiledScript compiledScript,
-                                  Script script,
-                                  ResponseBodyEmitter emitter) {
-        executorService.submit(() -> {
+                                  Script script) {
+        /*executorService.submit(() -> {
             try {
-                createBindingsAndRun(compiledScript, script, emitter, null);
-                emitter.complete();
+                createBindingsAndRun(compiledScript, script, null);
             } catch (ScriptException se) {
                 script.setStatus(ScriptStatus.Error);
                 script.getOutput().append(se.getMessage());
-                try {
-                    emitter.send(se.getMessage());
-                    emitter.complete();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
-        });
+        });*/
     }
 
     @Override
@@ -58,24 +51,21 @@ public class ScriptServiceImpl implements ScriptService {
                                  Script script,
                                  OutputStream out) throws IOException {
         try {
-            createBindingsAndRun(compiledScript, script, null, out);
+            createContextAndRun(compiledScript, script, out, false);
         } catch (ScriptException e) {
             script.setStatus(ScriptStatus.Error);
-            script.getOutput().append(e.getMessage());
             out.write(e.getMessage().getBytes());
         }
     }
 
     @Override
-    public boolean stopScriptExecution(Integer id) {
-        Script script = scripts.get(id);
-        if (script == null) {
-            return false;
-        } else {
-            script.getThread().stop();
-            scripts.remove(id);
-            return true;
-        }
+    public boolean stopScriptExecution(Integer id) {//fix
+        return Optional.ofNullable(scripts.get(id))
+                .map(script -> {
+                    script.stopScriptExecution();
+                    return true;
+                })
+                .orElse(false);
     }
 
     @Override
@@ -98,19 +88,15 @@ public class ScriptServiceImpl implements ScriptService {
         return scripts.values();
     }
 
-    private void createBindingsAndRun(CompiledScript compiledScript,
+    private void createContextAndRun(CompiledScript compiledScript,
                                       Script script,
-                                      ResponseBodyEmitter emitter,
-                                      OutputStream out) throws ScriptException {
+                                      OutputStream out, boolean async) throws ScriptException {
         script.setThread(Thread.currentThread());
-        Bindings bindings = compiler.createBindings();
-        if (out == null) bindings.put("print",
-                new AsyncPrint(emitter, script.getOutput()));
-        else bindings.put("print",
-                new SyncPrint(out, script.getOutput()));
         script.setStatus(ScriptStatus.Running);
+        ScriptContext ctx = new SimpleScriptContext();
+        if (!async) ctx.setWriter(new SyncWriter(out, script.getOutput()));
         long begin = System.currentTimeMillis();
-        compiledScript.eval(bindings);
+        compiledScript.eval(ctx);
         long end = System.currentTimeMillis();
         script.setExecutionTime(end - begin);
         script.setStatus(ScriptStatus.Done);

@@ -26,9 +26,4 @@ public class ScriptCompilerImpl implements ScriptCompiler {
     public CompiledScript compile(String script) throws ScriptException {
         return nashorn.compile(script);
     }
-
-    @Override
-    public Bindings createBindings() {
-        return nashorn.createBindings();
-    }
 }

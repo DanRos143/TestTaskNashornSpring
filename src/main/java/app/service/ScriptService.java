@@ -12,8 +12,7 @@ import java.util.Collection;
 
 public interface ScriptService {
     void runAsynchronously(CompiledScript compiledScript,
-                           Script script,
-                           ResponseBodyEmitter emitter);
+                           Script script);
     void runSynchronously(CompiledScript compiledScript,
                           Script script,
                           OutputStream out) throws IOException;
