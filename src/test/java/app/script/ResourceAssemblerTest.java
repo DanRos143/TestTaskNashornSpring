@@ -8,11 +8,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.hateoas.Link;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.hamcrest.core.Is.is;
 
-@RunWith(SpringRunner.class)
+@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = {ScriptController.class, ScriptServiceImpl.class, ScriptCompilerImpl.class})
 public class ResourceAssemblerTest {
     private ScriptResourceAssembler assembler = new ScriptResourceAssembler();
