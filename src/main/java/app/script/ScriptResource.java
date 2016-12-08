@@ -4,10 +4,16 @@ import app.view.View;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.hateoas.ResourceSupport;
 
 import java.util.concurrent.TimeUnit;
 
+@NoArgsConstructor
+@Getter
+@Setter
 @JsonPropertyOrder({"id","status", "body","output", "_links"})
 public class ScriptResource extends ResourceSupport {
 
@@ -22,56 +28,9 @@ public class ScriptResource extends ResourceSupport {
     private StringBuilder output;
 
     @JsonView(View.Rest.class)
-    private long executionTime;
+    private long totalTime;
 
     @JsonView(View.Rest.class)
     private final String units = TimeUnit.MILLISECONDS.name();
 
-    public ScriptResource(){
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public Integer getIdentifier(){
-        return identifier;
-    }
-
-
-    public void setIdentifier(Integer id) {
-        this.identifier = id;
-    }
-
-    public ScriptStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ScriptStatus status) {
-        this.status = status;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    public StringBuilder getOutput() {
-        return output;
-    }
-
-    public void setOutput(StringBuilder output) {
-        this.output = output;
-    }
-
-    public long getExecutionTime() {
-        return executionTime;
-    }
-
-    public void setExecutionTime(long executionTime) {
-        this.executionTime = executionTime;
-    }
-
-    public String getUnits() {
-        return units;
-    }
 }

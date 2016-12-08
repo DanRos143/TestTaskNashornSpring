@@ -11,14 +11,11 @@ import java.util.Collection;
 
 
 public interface ScriptService {
-    void runAsynchronously(CompiledScript compiledScript,
-                           Script script);
-    void runSynchronously(CompiledScript compiledScript,
-                          Script script,
-                          OutputStream out) throws IOException;
-    void saveScript(Integer identifier, Script script);
-    boolean stopScriptExecution(Integer id);
-    Script getScript(Integer Id);
+    void runAsync(CompiledScript compiledScript, Script script);
+    void runSync(CompiledScript compiledScript,
+                          Script script) throws IOException, ScriptException;
+    void saveScript(Integer id, Script script);
+    Script getScript(Integer id);
     CompiledScript compile(String script) throws ScriptException;
     Collection<Script> getScripts();
 }

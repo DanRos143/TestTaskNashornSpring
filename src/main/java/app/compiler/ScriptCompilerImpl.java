@@ -18,8 +18,6 @@ public class ScriptCompilerImpl implements ScriptCompiler {
     public ScriptCompilerImpl() {
         nashorn = (NashornScriptEngine)
                 new ScriptEngineManager().getEngineByName("nashorn");
-        Bindings bindings = nashorn.getBindings(ScriptContext.GLOBAL_SCOPE);
-        bindings.remove("print");
     }
 
     @Override

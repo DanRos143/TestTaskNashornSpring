@@ -1,0 +1,10 @@
+application:
+    asyncExecutor:
+        corePoolSize: 5
+        maxPoolSize: 10
+        queueCapacity: 50
+        threadNamePrefix: AsyncTaskThread-
+    script:
+        stopDelay: 2
+
+

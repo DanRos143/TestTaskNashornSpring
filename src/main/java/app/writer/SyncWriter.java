@@ -1,6 +1,5 @@
 package app.writer;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,11 +9,6 @@ import java.io.*;
 @Setter
 public class SyncWriter extends OutputStreamWriter {
     private StringBuilder output;
-
-
-    public SyncWriter(OutputStream out) {
-        super(out);
-    }
 
     public SyncWriter(OutputStream out, StringBuilder output){
         super(out);

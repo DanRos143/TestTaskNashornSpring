@@ -2,7 +2,9 @@ package app.script;
 
 import app.controller.ScriptController;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ScriptResourceAssembler extends ResourceAssemblerSupport<Script, ScriptResource> {
 
     public ScriptResourceAssembler() {
@@ -16,7 +18,7 @@ public class ScriptResourceAssembler extends ResourceAssemblerSupport<Script, Sc
         resource.setStatus(script.getStatus());
         resource.setBody(script.getBody());
         resource.setOutput(script.getOutput());
-        resource.setExecutionTime(script.getExecutionTime());
+        resource.setTotalTime(script.getExecutionTime());
         return resource;
     }
 }

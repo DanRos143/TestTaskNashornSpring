@@ -101,13 +101,13 @@ public class ControllerTest {
                 .accept(MediaType.TEXT_PLAIN)
                 .content(script))
                 .andExpect(status().isCreated());
-        mockMvc.perform(post("/api/scripts/sync")
+        /*mockMvc.perform(post("/api/scripts/sync")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content(script))
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(content().string(errorMessage));
+                .andExpect(content().string(errorMessage));*/
     }
     @Test
     public void getAllScriptsTest() throws  Exception{
