@@ -17,7 +17,6 @@ import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2
@@ -32,15 +31,15 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     private long executionTime;
     private Thread thread;
     private CompiledScript compiled;
-
     @Value("${application.script.stopDelay}")
     private long delay;
 
-    public Script(Integer id, String body) {
+    public Script(Integer id, String body, CompiledScript compiled){
         this.id = id;
         this.body = body;
         this.output = new StringBuilder();
         this.status = ScriptStatus.Waiting;
+        this.compiled = compiled;
     }
 
     @Override
@@ -51,8 +50,8 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     @Override
     public void writeTo(OutputStream out) throws IOException {
         try {
-            thread = Thread.currentThread();
             out.flush();
+            thread = Thread.currentThread();
             log.info("headers sent, execution started in {}", thread.getName());
             compiled.eval(createContext(out));
         } catch (ScriptException e) {
@@ -79,6 +78,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         TimeUnit.SECONDS.sleep(delay);
         if (thread.isAlive()) thread.stop();
     }
+
     private ScriptContext createContext(OutputStream out){
         ScriptContext ctx = new SimpleScriptContext();
         if (out != null) ctx.setWriter(new TeeWriter(out, output));

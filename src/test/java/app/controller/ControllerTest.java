@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -148,6 +149,11 @@ public class ControllerTest {
                 .content("print(3)"))
                 .andExpect(status().isCreated())
                 .andReturn();
+
+    }
+
+    @Test
+    public void dummyTest(){
 
     }
 }

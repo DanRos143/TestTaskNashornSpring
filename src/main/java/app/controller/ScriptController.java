@@ -5,6 +5,7 @@ import app.script.ScriptResource;
 import app.script.ScriptStatus;
 import app.view.View;
 import com.fasterxml.jackson.annotation.JsonView;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.ExposesResourceFor;
@@ -15,15 +16,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import app.service.ScriptService;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 import static org.springframework.web.util.UriComponentsBuilder.*;
 
 import javax.script.*;
-import java.io.*;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Log4j2
@@ -47,17 +45,18 @@ public class ScriptController {
 
     @GetMapping(produces = MediaTypes.HAL_JSON_VALUE)
     @JsonView(View.Rest.class)
-    public Resources<ScriptResource> getAll() {
+    @SneakyThrows
+    public Resources<ScriptResource> getAllScripts() {
         return new Resources<>(
                 assembler.toResources(service.getScripts()),
                 linkTo(ScriptController.class).withSelfRel(),
-                linkTo(ScriptController.class).slash("async")
+                linkTo(methodOn(ScriptController.class).evalScript(null, true))
                         .withRel("asyncExecution"),
-                linkTo(ScriptController.class).slash("sync")
+                linkTo(methodOn(ScriptController.class).evalScript(null, false))
                         .withRel("syncExecution")
         );
     }
-
+    //hardcoded constants for view classes. Use class names instead?
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE)
     @JsonView(View.Rest.class)
     public ResponseEntity getScript(@PathVariable Integer id){
@@ -75,31 +74,25 @@ public class ScriptController {
     public ResponseEntity getScriptOutput(@PathVariable Integer id){
         return createResponseEntity(id, "output");
     }
-    //merge in one method
-    @PostMapping(value = "/async", consumes = MediaType.TEXT_PLAIN_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<Void> asyncScriptEval(@RequestBody String body) throws ScriptException {
-        CompiledScript compiled = service.compile(body);
-        Script script = new Script(counter.incrementAndGet(), body);
-        script.setCompiled(compiled);
-        service.saveScript(script);
-        service.submitAsync(script);
-        return ResponseEntity.created(fromPath("/api/scripts/{id}")
-                .buildAndExpand(script.getId())
-                .toUri())
-                .build();
-    }
 
-    @PostMapping(value = "/sync", consumes = MediaType.TEXT_PLAIN_VALUE,
+    @PostMapping(consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<StreamingResponseBody> syncScriptEval(@RequestBody String body, OutputStream out)
-            throws ScriptException, IOException {
+    public ResponseEntity evalScript(@RequestBody String body,
+                                     @RequestParam(defaultValue = "false") boolean async)
+            throws ScriptException {
         CompiledScript compiled = service.compile(body);
-        Script script = new Script(counter.incrementAndGet(), body);
+        Script script = new Script(counter.incrementAndGet(), body, compiled);
         service.saveScript(script);
-        script.setCompiled(compiled);
-        return ResponseEntity.created(fromPath("/api/scripts/{id}")
-                .buildAndExpand(script.getId()).toUri()).body(script);
+        if (async) {
+            service.submitAsync(script);
+            return ResponseEntity.created(fromPath("/api/scripts/{id}")
+                    .buildAndExpand(script.getId())
+                    .toUri())
+                    .build();
+        } else {
+            return ResponseEntity.created(fromPath("/api/scripts/{id}")
+                    .buildAndExpand(script.getId()).toUri()).body(script);
+        }
     }
 
     @DeleteMapping(value = "/{id}")
