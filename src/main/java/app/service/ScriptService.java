@@ -11,11 +11,9 @@ import java.util.Collection;
 
 
 public interface ScriptService {
-    void runAsync(CompiledScript compiledScript, Script script);
-    void runSync(CompiledScript compiledScript,
-                          Script script) throws IOException, ScriptException;
-    void saveScript(Integer id, Script script);
     Script getScript(Integer id);
     CompiledScript compile(String script) throws ScriptException;
     Collection<Script> getScripts();
+    void submitAsync(Script script);
+    void saveScript(Script script);
 }

@@ -3,7 +3,7 @@ application:
         corePoolSize: 5
         maxPoolSize: 10
         queueCapacity: 50
-        threadNamePrefix: AsyncTaskThread-
+        threadNamePrefix: AsyncThread-
     script:
         stopDelay: 2
 

@@ -11,6 +11,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.script.CompiledScript;
 import javax.script.ScriptException;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(SpringRunner.class)
@@ -34,8 +35,19 @@ public class ScriptStopTest {
             }
         });
         t1.start();
-        TimeUnit.SECONDS.sleep(1);
-        script.stopScriptExecution();
+        TimeUnit.SECONDS.sleep(5);
+        script.stopExecution();
         Assert.assertTrue(t1.isInterrupted());
+        TimeUnit.SECONDS.sleep(5);
+    }
+    @Test//(expected = ScriptException.class)
+    public void throwIOExceptionFromScript() throws IOException {
+        String script = "print('preparing to throw');throw new java.io.IOException();";
+        try {
+            compiler.compile(script).eval();
+        } catch (ScriptException e) {
+            throw new IOException(e);
+        }
+
     }
 }

@@ -27,7 +27,7 @@ public class CustomWriterTest {
         String script = "for(var i = 0; i < 5; i++){ print('greetings')}";
         StringBuilder output = new StringBuilder();
         ByteArrayOutputStream outer = new ByteArrayOutputStream();
-        SyncWriter writer = new SyncWriter(outer, output);
+        TeeWriter writer = new TeeWriter(outer, output);
         ScriptContext ctx = new SimpleScriptContext();
         ctx.setWriter(writer);
         compiler.compile(script).eval(ctx);

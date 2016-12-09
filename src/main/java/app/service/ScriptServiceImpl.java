@@ -1,8 +1,7 @@
 package app.service;
 
 import app.script.Script;
-import app.script.ScriptStatus;
-import app.writer.SyncWriter;
+import app.writer.TeeWriter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.output.StringBuilderWriter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,8 @@ import app.compiler.ScriptCompiler;
 
 import javax.script.*;
 import java.io.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.concurrent.*;
 
@@ -34,26 +35,6 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public void runAsync(CompiledScript compiledScript, Script script) {
-        log.trace("starting async execution");
-        executor.submit(() -> {
-            try {
-                compiledScript.eval(createContext(script, null))
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            }
-
-        });
-    }
-
-    @Override
-    public void runSync(CompiledScript compiledScript,
-                                 Script script) throws IOException, ScriptException {
-        //call method
-
-    }
-
-    @Override
     public Script getScript(Integer id) {
         return scripts.get(id);
     }
@@ -64,35 +45,19 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public void saveScript(Integer id, Script script) {
-        scripts.put(id, script);
-    }
-
-    @Override
     public Collection<Script> getScripts() {
         return scripts.values();
     }
 
-    private ScriptContext createContext(Script script,OutputStream out){
-        script.setThread(Thread.currentThread());
-        ScriptContext ctx = new SimpleScriptContext();
-        if (out == null) ctx.setWriter(new StringBuilderWriter(script.getOutput()));
-        else ctx.setWriter(new SyncWriter(out, script.getOutput()));
-        return ctx;
+    @Override
+    public void submitAsync(Script script) {
+        executor.submit(script::runAsync);
     }
 
-    /*private void calculateTimeAndUpdateStatus(Script script, CompiledScript compiledScript){
-        try {
-            long begin = System.currentTimeMillis();
-            script.setStatus(ScriptStatus.Running);
-            compiledScript.eval(createContext(script, null));
-            long end = System.currentTimeMillis();
-            script.setExecutionTime(end - begin);
-            script.setStatus(ScriptStatus.Done);
-        } catch (ScriptException e) {
-            script.getOutput().append(e.getMessage());
-            script.setStatus(ScriptStatus.Error);
-        }
-    }*/
+    @Override
+    public void saveScript(Script script) {
+        scripts.put(script.getId(), script);
+    }
+
 }
 

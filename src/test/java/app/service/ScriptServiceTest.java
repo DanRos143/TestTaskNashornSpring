@@ -1,6 +1,7 @@
 package app.service;
 
 
+import app.Application;
 import app.compiler.ScriptCompilerImpl;
 import app.script.Script;
 import org.junit.Assert;
@@ -17,11 +18,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-//@RunWith(SpringJUnit4ClassRunner.class)
-//@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class})
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, Application.class})
 public class ScriptServiceTest {
 
-    //@Autowired
+    @Autowired
     ScriptService service;
 
 /*    @Test(expected = ThreadDeath.class)
@@ -42,4 +43,6 @@ public class ScriptServiceTest {
         service.runSync(compiledScript, script, baos);
         Assert.assertTrue(!script.getThread().isAlive());
     }*/
+
+
 }

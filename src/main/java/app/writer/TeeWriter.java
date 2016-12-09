@@ -7,10 +7,10 @@ import java.io.*;
 
 @Getter
 @Setter
-public class SyncWriter extends OutputStreamWriter {
+public class TeeWriter extends OutputStreamWriter {
     private StringBuilder output;
 
-    public SyncWriter(OutputStream out, StringBuilder output){
+    public TeeWriter(OutputStream out, StringBuilder output){
         super(out);
         this.output = output;
     }
