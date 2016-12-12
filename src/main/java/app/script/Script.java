@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.output.StringBuilderWriter;
+import org.jboss.logging.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.hateoas.Identifiable;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -53,24 +54,27 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
             out.flush();
             thread = Thread.currentThread();
             status = ScriptStatus.Running;
-            log.info("headers sent, execution started in {}", thread.getName());
+            MDC.put("current", thread.getName());
+            log.info("headers sent, execution started in {}", MDC.get("current"));
             compiled.eval(createContext(out));
+            status = ScriptStatus.Done;
         } catch (ScriptException e) {
-            log.error("script exception occurred in thread {}", thread.getName());
-            /*if (e.getCause() instanceof IOException) {
-                log.error("script exception occurred because of {}", e.getCause().getMessage());
-                stopExecution();
-            }*/
+            out.write(e.getMessage().getBytes());
+            output.append(e.getMessage());
+            status = ScriptStatus.Error;
+            log.error("script exception occurred in thread {}", MDC.get("current"));
         }
     }
 
     public void runAsync(){
         try {
             thread = Thread.currentThread();
-            log.info("async execution started in {}", thread.getName());
+            status = ScriptStatus.Running;
             compiled.eval(createContext(null));
+            status = ScriptStatus.Done;
         } catch (ScriptException e) {
-            stopExecution();
+            output.append(e.getMessage());
+            status = ScriptStatus.Error;
         }
     }
 

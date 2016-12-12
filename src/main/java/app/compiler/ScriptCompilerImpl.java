@@ -21,7 +21,7 @@ public class ScriptCompilerImpl implements ScriptCompiler {
     }
 
     @Override
-    public CompiledScript compile(String script) throws ScriptException {
-        return nashorn.compile(script);
+    public CompiledScript compile(String body) throws ScriptException {
+        return nashorn.compile(body);
     }
 }

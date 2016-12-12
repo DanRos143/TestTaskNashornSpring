@@ -5,6 +5,9 @@ import lombok.Setter;
 
 import java.io.*;
 
+/**
+ *
+ */
 @Getter
 @Setter
 public class TeeWriter extends OutputStreamWriter {

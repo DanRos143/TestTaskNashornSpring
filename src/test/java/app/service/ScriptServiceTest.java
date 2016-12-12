@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 //@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, Application.class})
 public class ScriptServiceTest {
 
-    @Autowired
+    //@Autowired
     ScriptService service;
 
 /*    @Test(expected = ThreadDeath.class)

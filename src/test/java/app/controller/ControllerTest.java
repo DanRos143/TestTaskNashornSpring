@@ -52,13 +52,13 @@ public class ControllerTest {
         mockMvc.perform(post("/api/scripts/async")
                 .contentType(MediaType.TEXT_PLAIN).accept(MediaType.TEXT_PLAIN)
                 .content("print('greetings')"))
-                .andDo(print())
+                //.andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/scripts/1"));
         mockMvc.perform(post("/api/scripts/sync")
                 .contentType(MediaType.TEXT_PLAIN).accept(MediaType.TEXT_PLAIN)
                 .content("print('greetings')"))
-                .andDo(print())
+                //.andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/scripts/2"));
     }
@@ -86,28 +86,6 @@ public class ControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(errorMessage));
     }
-    /*@Test
-    public void catchRuntimeScriptException() throws Exception {
-        String script = "log(3)";
-        String errorMessage = null;
-        try {
-            compiler.compile(script).eval();
-        } catch (ScriptException e) {
-            errorMessage = e.getMessage();
-        }
-        mockMvc.perform(post("/api/scripts/async")
-                .contentType(MediaType.TEXT_PLAIN)
-                .accept(MediaType.TEXT_PLAIN)
-                .content(script))
-                .andExpect(status().isCreated());
-        mockMvc.perform(post("/api/scripts/sync")
-                .contentType(MediaType.TEXT_PLAIN)
-                .accept(MediaType.TEXT_PLAIN)
-                .content(script))
-                .andDo(print())
-                .andExpect(status().isCreated())
-                .andExpect(content().string(errorMessage));
-    }*/
     @Test
     public void getAllScriptsTest() throws  Exception{
         String uri = "/api/scripts";

@@ -10,6 +10,7 @@ import app.compiler.ScriptCompiler;
 import javax.script.*;
 import java.util.Collection;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Log4j2
 @Service
@@ -18,6 +19,7 @@ public class ScriptServiceImpl implements ScriptService {
             new ConcurrentHashMap<>();
     private ScriptCompiler compiler;
     private AsyncTaskExecutor executor;
+    private AtomicInteger counter = new AtomicInteger(0);
 
     @Autowired
     public void setExecutor(AsyncTaskExecutor executor) {
@@ -35,11 +37,6 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public CompiledScript compile(String script) throws ScriptException {
-        return compiler.compile(script);
-    }
-
-    @Override
     public Collection<Script> getScripts() {
         return scripts.values();
     }
@@ -50,9 +47,10 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public void saveScript(Script script) {
+    public Script compileAndSave(String body) throws ScriptException {
+        Script script = new Script(counter.incrementAndGet(), body, compiler.compile(body));
         scripts.put(script.getId(), script);
+        return script;
     }
-
 }
 

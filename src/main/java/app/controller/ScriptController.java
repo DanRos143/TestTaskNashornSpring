@@ -23,16 +23,13 @@ import static org.springframework.web.util.UriComponentsBuilder.*;
 
 import javax.script.*;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Log4j2
 @RestController
 @RequestMapping(value = "/api/scripts")
 @ExposesResourceFor(Script.class)
 public class ScriptController {
-    private AtomicInteger counter = new AtomicInteger(0);
     private ResourceAssemblerSupport<Script, ScriptResource> assembler;
     private ScriptService service;
 
@@ -80,24 +77,18 @@ public class ScriptController {
 
     @PostMapping(value = "/async", consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity evalScript(@RequestBody String body)
+    public ResponseEntity<Void> asyncScriptEval(@RequestBody String body)
             throws ScriptException {
-        CompiledScript compiled = service.compile(body);
-        Script script = new Script(counter.incrementAndGet(), body, compiled);
-        service.saveScript(script);
+        Script script = service.compileAndSave(body);
         service.submitAsync(script);
         return ResponseEntity.created(fromPath("/api/scripts/{id}")
-                .buildAndExpand(script.getId())
-                .toUri())
-                .build();
+                .buildAndExpand(script.getId()).toUri()).build();
     }
     @PostMapping(value = "/sync", consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<StreamingResponseBody> syncScriptEval(@RequestBody String body, OutputStream out)
+    public ResponseEntity<StreamingResponseBody> syncScriptEval(@RequestBody String body)
             throws ScriptException, IOException {
-        CompiledScript compiled = service.compile(body);
-        Script script = new Script(counter.incrementAndGet(), body, compiled);
-        service.saveScript(script);
+        Script script = service.compileAndSave(body);
         return ResponseEntity.created(fromPath("/api/scripts/{id}")
                 .buildAndExpand(script.getId()).toUri()).body(script);
     }
@@ -121,8 +112,8 @@ public class ScriptController {
     public ResponseEntity handleScriptException(ScriptException se){
         return ResponseEntity.badRequest().body(se.getMessage());
     }
-
-    private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {
+    //put in separated class
+    private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {//remove to some util class?
         return Optional.ofNullable(service.getScript(id))
                 .map(script -> {
                     ScriptResource resource = assembler.toResource(script);

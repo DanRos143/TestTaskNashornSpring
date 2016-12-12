@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.script.CompiledScript;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +39,7 @@ public class ScriptStopTest {
         Assert.assertTrue(t1.isInterrupted());
         TimeUnit.SECONDS.sleep(5);
     }
-    /*@Test(expected = ScriptException.class)
+    @Test
     public void throwIOExceptionFromScript() {
         Throwable t = null;
         String script = "print('preparing to throw');throw new java.io.IOException();";
@@ -48,9 +47,14 @@ public class ScriptStopTest {
             compiler.compile(script).eval();
         } catch (ScriptException e) {
             t = e.getCause();
-            Assert.assertTrue(e.getCause() instanceof IOException);
-            System.out.println(e.getCause().getMessage() + " message");
         }
-        Assert.assertTrue(t instanceof IOException);
-    }*/
+        Assert.assertTrue(t.getCause() instanceof IOException);
+    }
+    @Test
+    public void aopTest() throws ScriptException {
+        String body = "print('test')";
+        Script script = new Script(1, body, compiler.compile(body));
+        script.runAsync();
+    }
+
 }

@@ -32,5 +32,4 @@ public class ScriptResource extends ResourceSupport {
 
     @JsonView(View.Rest.class)
     private final String units = TimeUnit.MILLISECONDS.name();
-
 }
