@@ -21,7 +21,7 @@ public class ScriptStopTest {
     ScriptCompiler compiler;
 
 
-    @Test
+    /*@Test
     public void testStopWithDelay() throws ScriptException, InterruptedException {
         Script script = new Script(1, "while(true) {}", null);
         script.setCompiled(compiler.compile(script.getBody()));
@@ -38,7 +38,7 @@ public class ScriptStopTest {
         script.stopExecution();
         Assert.assertTrue(t1.isInterrupted());
         TimeUnit.SECONDS.sleep(5);
-    }
+    }*/
     @Test
     public void throwIOExceptionFromScript() {
         Throwable t = null;

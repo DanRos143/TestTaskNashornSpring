@@ -112,7 +112,7 @@ public class ScriptController {
     public ResponseEntity handleScriptException(ScriptException se){
         return ResponseEntity.badRequest().body(se.getMessage());
     }
-    //put in separated class
+
     private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {//remove to some util class?
         return Optional.ofNullable(service.getScript(id))
                 .map(script -> {

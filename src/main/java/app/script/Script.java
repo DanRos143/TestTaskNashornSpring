@@ -20,6 +20,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Domain model object which contains all related to script data
+ * and defines it behavior.
+ * Implements Identifiable to be able assembling to resources via ResourceAssembler implementation.
+ * Implements StreamingResponseBody for synchronous script execution mode without holding container
+ * thread. Stores all script output(including exception messages) to StringBuilder called output;
+ * @author danros
+ * @see TeeWriter
+ * @see StringBuilderWriter
+ * @see CompiledScript
+ * @see ScriptStatus
+ * @see Identifiable
+ * @see StreamingResponseBody
+ */
 @Log4j2
 @Getter
 @Setter
@@ -78,6 +92,10 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         }
     }
 
+    /**
+     * shuts CompiledScript evaluation by interrupting the thread, and if it doesn't help - kills it
+     * after specified delay with thread.stop(). Delay is configurable in application.yml
+     */
     @SneakyThrows(InterruptedException.class)
     public void stopExecution() {
         thread.interrupt();
@@ -85,6 +103,11 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         if (thread.isAlive()) thread.stop();
     }
 
+    /**
+     * creates ScriptContext object for separated printing with writers for async and sync mode respectively
+     * @param out <code>OutputStream</code> object which indicates evaluation mode. If it is null - async mode, else - sync.
+     * @return implementing <code>ScriptContext<code/> interface object with writer set.
+     */
     private ScriptContext createContext(OutputStream out){
         ScriptContext ctx = new SimpleScriptContext();
         ctx.setWriter(out == null? new StringBuilderWriter(output):

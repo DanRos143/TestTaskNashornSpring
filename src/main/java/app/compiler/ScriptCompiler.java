@@ -4,7 +4,7 @@ import javax.script.CompiledScript;
 import javax.script.ScriptException;
 
 /**
- * This interface contains one and only one method - compile, which creates
+ * This interface contains one method - compile, which creates
  * new CompiledScript object from source String
  * @author danros
  * @see CompiledScript
