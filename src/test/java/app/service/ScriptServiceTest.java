@@ -18,8 +18,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, Application.class})
+//@RunWith(SpringJUnit4ClassRunner.class)
+//@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, Application.class})
 public class ScriptServiceTest {
 
     @Autowired

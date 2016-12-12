@@ -47,24 +47,22 @@ public class ControllerTest {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
     }
 
-    /*@Test
+    @Test
     public void anExecutionTest() throws Exception {
         mockMvc.perform(post("/api/scripts/async")
                 .contentType(MediaType.TEXT_PLAIN).accept(MediaType.TEXT_PLAIN)
                 .content("print('greetings')"))
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/scripts/1"))
-                .andExpect(request().asyncStarted());
+                .andExpect(header().string("Location", "/api/scripts/1"));
         mockMvc.perform(post("/api/scripts/sync")
                 .contentType(MediaType.TEXT_PLAIN).accept(MediaType.TEXT_PLAIN)
                 .content("print('greetings')"))
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/scripts/2"))
-                .andExpect(content().string("greetings\n"));
-    }*/
-    /*@Test
+                .andExpect(header().string("Location", "/api/scripts/2"));
+    }
+    @Test
     public void catchScriptCompilationException() throws Exception {
         String script = "print(";
         String errorMessage = null;
@@ -79,7 +77,7 @@ public class ControllerTest {
                 .content(script))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(errorMessage + "\n"));
+                .andExpect(content().string(errorMessage));
         mockMvc.perform(post("/api/scripts/sync")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
@@ -87,8 +85,8 @@ public class ControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(errorMessage));
-    }*/
-    @Test
+    }
+    /*@Test
     public void catchRuntimeScriptException() throws Exception {
         String script = "log(3)";
         String errorMessage = null;
@@ -102,14 +100,14 @@ public class ControllerTest {
                 .accept(MediaType.TEXT_PLAIN)
                 .content(script))
                 .andExpect(status().isCreated());
-        /*mockMvc.perform(post("/api/scripts/sync")
+        mockMvc.perform(post("/api/scripts/sync")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content(script))
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(content().string(errorMessage));*/
-    }
+                .andExpect(content().string(errorMessage));
+    }*/
     @Test
     public void getAllScriptsTest() throws  Exception{
         String uri = "/api/scripts";
@@ -120,7 +118,7 @@ public class ControllerTest {
                 .andExpect(jsonPath("$._links.asyncExecution.href").value("http://localhost/api/scripts/async"))
                 .andExpect(jsonPath("$._links.syncExecution.href").value("http://localhost/api/scripts/sync"));
     }
-    /*@Test
+    @Test
     public void getSingleScriptTest() throws Exception {
         MvcResult mvcResult = mockMvc.perform(post("/api/scripts/async")
                 .contentType(MediaType.TEXT_PLAIN)
@@ -138,22 +136,15 @@ public class ControllerTest {
                 .andExpect(jsonPath("$._links.stop.href").value(location));
         mockMvc.perform(delete(location))
                 .andExpect(status().isOk());
-        mockMvc.perform(get(location).accept("application/hal+json"))
-                .andExpect(status().isNotFound());*//*
-    }*/
+        /*mockMvc.perform(get(location).accept("application/hal+json"))
+                .andExpect(status().isNotFound());*/
+    }
     @Test
     public void outTest() throws Exception {
         mockMvc.perform(post("/api/scripts/async")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content("print(3)"))
-                .andExpect(status().isCreated())
-                .andReturn();
-
-    }
-
-    @Test
-    public void dummyTest(){
-
+                .andExpect(status().isCreated());
     }
 }

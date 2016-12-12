@@ -27,7 +27,7 @@ public class CompilerTest {
     private ScriptCompiler compiler;
 
 
-    /*@Test(expected = ScriptException.class)
+    @Test(expected = ScriptException.class)
     public void getCompilationException() throws ScriptException {
         String invalidScript = "print(";
         compiler.compile(invalidScript);
@@ -46,9 +46,9 @@ public class CompilerTest {
         }
         compiledScript.eval();
         Assert.assertEquals(compileError, null);
-    }*/
+    }
 
-    @Test
+    /*@Test
     public void printInSeparatedOut() throws ScriptException, InterruptedException {
         String script = "print(0)";
         ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
@@ -79,5 +79,5 @@ public class CompilerTest {
         System.out.println(baos1.toString());
         System.out.println(baos2.toString());
         Assert.assertTrue(baos1.toString().equals(baos2.toString()));
-    }
+    }*/
 }

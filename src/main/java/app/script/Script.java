@@ -52,20 +52,22 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         try {
             out.flush();
             thread = Thread.currentThread();
+            status = ScriptStatus.Running;
             log.info("headers sent, execution started in {}", thread.getName());
             compiled.eval(createContext(out));
         } catch (ScriptException e) {
-            log.error("client disconnected from thread {}", thread.getName());
-            stopExecution();
-        } catch (IOException ioe){
-            log.error("IOException occurred", ioe.getMessage());
+            log.error("script exception occurred in thread {}", thread.getName());
+            /*if (e.getCause() instanceof IOException) {
+                log.error("script exception occurred because of {}", e.getCause().getMessage());
+                stopExecution();
+            }*/
         }
     }
 
     public void runAsync(){
         try {
             thread = Thread.currentThread();
-            log.info("sync execution started in {}", thread.getName());
+            log.info("async execution started in {}", thread.getName());
             compiled.eval(createContext(null));
         } catch (ScriptException e) {
             stopExecution();
@@ -81,8 +83,8 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
 
     private ScriptContext createContext(OutputStream out){
         ScriptContext ctx = new SimpleScriptContext();
-        if (out != null) ctx.setWriter(new TeeWriter(out, output));
-        else ctx.setWriter(new StringBuilderWriter(output));
+        ctx.setWriter(out == null? new StringBuilderWriter(output):
+                new TeeWriter(out, output));
         return ctx;
     }
 }

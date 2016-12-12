@@ -12,6 +12,8 @@ import java.util.Collection;
  * @see app.script.Script
  *
  * Interface which contains service layer methods to manage Script class
+ * includes methods to retrieve Script object, save Script object, get CompiledScript objects from plain/text string,
+ * get collection of scripts or submit async task which evaluates script
  */
 
 public interface ScriptService {

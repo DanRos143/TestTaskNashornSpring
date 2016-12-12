@@ -16,11 +16,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import app.service.ScriptService;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 import static org.springframework.web.util.UriComponentsBuilder.*;
 
 import javax.script.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,49 +53,53 @@ public class ScriptController {
         return new Resources<>(
                 assembler.toResources(service.getScripts()),
                 linkTo(ScriptController.class).withSelfRel(),
-                linkTo(methodOn(ScriptController.class).evalScript(null, true))
+                linkTo(ScriptController.class).slash("async")
                         .withRel("asyncExecution"),
-                linkTo(methodOn(ScriptController.class).evalScript(null, false))
+                linkTo(ScriptController.class).slash("sync")
                         .withRel("syncExecution")
         );
     }
-    //hardcoded constants for view classes. Use class names instead?
+
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE)
     @JsonView(View.Rest.class)
     public ResponseEntity getScript(@PathVariable Integer id){
-        return createResponseEntity(id, "rest");
+        return createResponseEntity(id, View.ViewType.Rest);
     }
 
     @GetMapping(value = "/{id}/body", produces = MediaTypes.HAL_JSON_VALUE)
     @JsonView(View.Body.class)
     public ResponseEntity getScriptBody(@PathVariable Integer id){
-        return createResponseEntity(id, "body");
+        return createResponseEntity(id, View.ViewType.Body);
     }
 
     @GetMapping(value = "/{id}/output", produces = MediaTypes.HAL_JSON_VALUE)
     @JsonView(View.Output.class)
     public ResponseEntity getScriptOutput(@PathVariable Integer id){
-        return createResponseEntity(id, "output");
+        return createResponseEntity(id, View.ViewType.Output);
     }
 
-    @PostMapping(consumes = MediaType.TEXT_PLAIN_VALUE,
+    @PostMapping(value = "/async", consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity evalScript(@RequestBody String body,
-                                     @RequestParam(defaultValue = "false") boolean async)
+    public ResponseEntity evalScript(@RequestBody String body)
             throws ScriptException {
         CompiledScript compiled = service.compile(body);
         Script script = new Script(counter.incrementAndGet(), body, compiled);
         service.saveScript(script);
-        if (async) {
-            service.submitAsync(script);
-            return ResponseEntity.created(fromPath("/api/scripts/{id}")
-                    .buildAndExpand(script.getId())
-                    .toUri())
-                    .build();
-        } else {
-            return ResponseEntity.created(fromPath("/api/scripts/{id}")
-                    .buildAndExpand(script.getId()).toUri()).body(script);
-        }
+        service.submitAsync(script);
+        return ResponseEntity.created(fromPath("/api/scripts/{id}")
+                .buildAndExpand(script.getId())
+                .toUri())
+                .build();
+    }
+    @PostMapping(value = "/sync", consumes = MediaType.TEXT_PLAIN_VALUE,
+            produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<StreamingResponseBody> syncScriptEval(@RequestBody String body, OutputStream out)
+            throws ScriptException, IOException {
+        CompiledScript compiled = service.compile(body);
+        Script script = new Script(counter.incrementAndGet(), body, compiled);
+        service.saveScript(script);
+        return ResponseEntity.created(fromPath("/api/scripts/{id}")
+                .buildAndExpand(script.getId()).toUri()).body(script);
     }
 
     @DeleteMapping(value = "/{id}")
@@ -115,12 +122,12 @@ public class ScriptController {
         return ResponseEntity.badRequest().body(se.getMessage());
     }
 
-    private ResponseEntity createResponseEntity(Integer id, String type){//hardcoded constants
+    private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {
         return Optional.ofNullable(service.getScript(id))
                 .map(script -> {
                     ScriptResource resource = assembler.toResource(script);
                     switch (type){
-                        case "rest":
+                        case Rest:
                             resource.add(
                                     linkTo(methodOn(ScriptController.class).getScriptOutput(id))
                                             .slash(id + "/output").withRel("output"),
@@ -132,14 +139,14 @@ public class ScriptController {
                                 resource.add(linkTo(methodOn(ScriptController.class).stopScriptExecution(id))
                                         .slash(id).withRel("stop"));
                             break;
-                        case "body":
+                        case Body:
                             resource.getLinks().clear();
                             resource.add(linkTo(methodOn(ScriptController.class).getScriptBody(id))
                                     .slash(id)
                                     .slash("body")
                                     .withSelfRel());
                             break;
-                        case "output":
+                        case Output:
                             resource.getLinks().clear();
                             resource.add(linkTo(methodOn(ScriptController.class).getScriptOutput(id))
                                     .slash(id)
