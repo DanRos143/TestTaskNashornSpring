@@ -17,11 +17,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Log4j2
 @Service
 public class ScriptServiceImpl implements ScriptService {
-    private ConcurrentMap<Integer, Script> scripts = 
+    private ConcurrentMap<Integer, Script> scripts =
             new ConcurrentHashMap<>();
     private ScriptCompiler compiler;
-    private AsyncTaskExecutor executor;
     private AtomicInteger counter = new AtomicInteger(0);
+    private AsyncTaskExecutor executor;
 
     @Autowired
     public void setExecutor(AsyncTaskExecutor executor) {

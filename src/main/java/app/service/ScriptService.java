@@ -43,6 +43,10 @@ public interface ScriptService {
      */
     void submitAsync(Script script);
 
+    /**
+     * removes Script Object from collection
+     * @param id Integer key
+     */
     void delete(Integer id);
 
 }

@@ -109,6 +109,7 @@ public class ScriptController {
     }
 
     private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {
+        log.info("building links by type {}", type);
         return Optional.ofNullable(service.getScript(id))
                 .map(script -> ResponseEntity.ok(assembler.toResource(script)
                         .addLinksByRepresentationType(type)))
