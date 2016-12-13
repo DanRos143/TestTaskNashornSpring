@@ -47,6 +47,11 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
+    public void delete(Integer id) {
+        scripts.remove(id);
+    }
+
+    @Override
     public Script compileAndSave(String body) throws ScriptException {
         Script script = new Script(counter.incrementAndGet(), body, compiler.compile(body));
         scripts.put(script.getId(), script);

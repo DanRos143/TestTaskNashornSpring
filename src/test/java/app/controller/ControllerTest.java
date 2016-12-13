@@ -114,8 +114,8 @@ public class ControllerTest {
                 .andExpect(jsonPath("$._links.stop.href").value(location));
         mockMvc.perform(delete(location))
                 .andExpect(status().isOk());
-        /*mockMvc.perform(get(location).accept("application/hal+json"))
-                .andExpect(status().isNotFound());*/
+        mockMvc.perform(get(location).accept("application/hal+json"))
+                .andExpect(status().isNotFound());
     }
     @Test
     public void outTest() throws Exception {

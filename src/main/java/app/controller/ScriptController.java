@@ -87,7 +87,7 @@ public class ScriptController {
     @PostMapping(value = "/sync", consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<StreamingResponseBody> syncScriptEval(@RequestBody String body)
-            throws ScriptException, IOException {
+            throws ScriptException {
         Script script = service.compileAndSave(body);
         return ResponseEntity.created(fromPath("/api/scripts/{id}")
                 .buildAndExpand(script.getId()).toUri()).body(script);
@@ -98,11 +98,12 @@ public class ScriptController {
         return Optional.ofNullable(service.getScript(id))
                 .map(script -> {
                     script.stopExecution();
+                    service.delete(id);
                     return ResponseEntity.ok().build();
                 })
                 .orElseThrow(IllegalArgumentException::new);
     }
-
+    
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity handleIllegalArgumentException(){
         return ResponseEntity.notFound().build();
@@ -113,40 +114,10 @@ public class ScriptController {
         return ResponseEntity.badRequest().body(se.getMessage());
     }
 
-    private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {//remove to some util class?
+    private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {
         return Optional.ofNullable(service.getScript(id))
-                .map(script -> {
-                    ScriptResource resource = assembler.toResource(script);
-                    switch (type){
-                        case Rest:
-                            resource.add(
-                                    linkTo(methodOn(ScriptController.class).getScriptOutput(id))
-                                            .slash(id + "/output").withRel("output"),
-                                    linkTo(methodOn(ScriptController.class).getScriptBody(id))
-                                            .slash(id + "/body").withRel("body")
-                            );
-                            if (!resource.getStatus().equals(ScriptStatus.Done) &&
-                                    !resource.getStatus().equals(ScriptStatus.Error))
-                                resource.add(linkTo(methodOn(ScriptController.class).stopScriptExecution(id))
-                                        .slash(id).withRel("stop"));
-                            break;
-                        case Body:
-                            resource.getLinks().clear();
-                            resource.add(linkTo(methodOn(ScriptController.class).getScriptBody(id))
-                                    .slash(id)
-                                    .slash("body")
-                                    .withSelfRel());
-                            break;
-                        case Output:
-                            resource.getLinks().clear();
-                            resource.add(linkTo(methodOn(ScriptController.class).getScriptOutput(id))
-                                    .slash(id)
-                                    .slash("output")
-                                    .withSelfRel());
-                            break;
-                    }
-                    return ResponseEntity.ok(resource);
-                })
+                .map(script -> ResponseEntity.ok(assembler.toResource(script)
+                        .addLinksByRepresentationType(type)))
                 .orElseThrow(IllegalArgumentException::new);
     }
 }

@@ -43,4 +43,6 @@ public interface ScriptService {
      */
     void submitAsync(Script script);
 
+    void delete(Integer id);
+
 }

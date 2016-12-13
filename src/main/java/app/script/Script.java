@@ -65,30 +65,33 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     @Override
     public void writeTo(OutputStream out) throws IOException {
         try {
+            log.info("headers sent, execution started");
             out.flush();
             thread = Thread.currentThread();
             status = ScriptStatus.Running;
-            MDC.put("current", thread.getName());
-            log.info("headers sent, execution started in {}", MDC.get("current"));
             compiled.eval(createContext(out));
             status = ScriptStatus.Done;
+            log.info("execution finished");
         } catch (ScriptException e) {
             out.write(e.getMessage().getBytes());
             output.append(e.getMessage());
             status = ScriptStatus.Error;
-            log.error("script exception occurred in thread {}", MDC.get("current"));
+            log.error("script exception occurred");
         }
     }
 
     public void runAsync(){
         try {
+            log.info("async execution started");
             thread = Thread.currentThread();
             status = ScriptStatus.Running;
             compiled.eval(createContext(null));
             status = ScriptStatus.Done;
+            log.info("async execution finished");
         } catch (ScriptException e) {
             output.append(e.getMessage());
             status = ScriptStatus.Error;
+            log.info("exception occurred during evaluation");
         }
     }
 
@@ -112,6 +115,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         ScriptContext ctx = new SimpleScriptContext();
         ctx.setWriter(out == null? new StringBuilderWriter(output):
                 new TeeWriter(out, output));
+        log.info("script context built");
         return ctx;
     }
 }
