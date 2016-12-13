@@ -64,33 +64,42 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
 
     @Override
     public void writeTo(OutputStream out) throws IOException {
+        long start = 0;
         try {
             log.info("headers sent, execution started");
             out.flush();
             thread = Thread.currentThread();
             status = ScriptStatus.Running;
+            start = System.currentTimeMillis();
             compiled.eval(createContext(out));
             status = ScriptStatus.Done;
             log.info("execution finished");
         } catch (ScriptException e) {
+            executionTime = System.currentTimeMillis() - start;
             out.write(e.getMessage().getBytes());
             output.append(e.getMessage());
             status = ScriptStatus.Error;
             log.error("script exception occurred");
         } finally {
+            executionTime = System.currentTimeMillis() - start;
+            log.info("closing connection...");
+            if (status.equals(ScriptStatus.Running)) status = ScriptStatus.Error;
             out.close();
         }
     }
 
     public void runAsync(){
+        long start = 0;
         try {
             log.info("async execution started");
             thread = Thread.currentThread();
             status = ScriptStatus.Running;
+            start = System.currentTimeMillis();
             compiled.eval(createContext(null));
             status = ScriptStatus.Done;
             log.info("async execution finished");
         } catch (ScriptException e) {
+            executionTime = System.currentTimeMillis() - start;
             output.append(e.getMessage());
             status = ScriptStatus.Error;
             log.info("exception occurred during evaluation");

@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import app.service.ScriptService;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 import static org.springframework.web.util.UriComponentsBuilder.*;
@@ -89,6 +88,7 @@ public class ScriptController {
     public ResponseEntity stopScriptExecution(@PathVariable Integer id) {
         return Optional.ofNullable(service.getScript(id))
                 .map(script -> {
+                    log.info("stopping script execution");
                     script.stopExecution();
                     service.delete(id);
                     return ResponseEntity.ok().build();
