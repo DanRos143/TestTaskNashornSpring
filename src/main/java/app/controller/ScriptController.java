@@ -2,7 +2,6 @@ package app.controller;
 
 import app.script.Script;
 import app.script.ScriptResource;
-import app.script.ScriptStatus;
 import app.view.View;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.SneakyThrows;
@@ -22,7 +21,6 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 import static org.springframework.web.util.UriComponentsBuilder.*;
 
 import javax.script.*;
-import java.io.IOException;
 import java.util.Optional;
 
 @Log4j2
@@ -47,50 +45,44 @@ public class ScriptController {
     @JsonView(View.Rest.class)
     @SneakyThrows
     public Resources<ScriptResource> getAllScripts() {
-        return new Resources<>(
-                assembler.toResources(service.getScripts()),
+        return new Resources<>(assembler.toResources(service.getScripts()),
                 linkTo(ScriptController.class).withSelfRel(),
-                linkTo(ScriptController.class).slash("async")
-                        .withRel("asyncExecution"),
-                linkTo(ScriptController.class).slash("sync")
-                        .withRel("syncExecution")
-        );
+                linkTo(methodOn(ScriptController.class).evalScript(true, null))
+                        .withRel("asyncEval"),
+                linkTo(methodOn(ScriptController.class).evalScript(false, null))
+                        .withRel("syncEval"));
     }
 
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE)
     @JsonView(View.Rest.class)
-    public ResponseEntity getScript(@PathVariable Integer id){
+    public ResponseEntity getScriptRepresentation(@PathVariable Integer id) {
         return createResponseEntity(id, View.ViewType.Rest);
     }
 
     @GetMapping(value = "/{id}/body", produces = MediaTypes.HAL_JSON_VALUE)
     @JsonView(View.Body.class)
-    public ResponseEntity getScriptBody(@PathVariable Integer id){
+    public ResponseEntity getScriptBody(@PathVariable Integer id) {
         return createResponseEntity(id, View.ViewType.Body);
     }
 
     @GetMapping(value = "/{id}/output", produces = MediaTypes.HAL_JSON_VALUE)
     @JsonView(View.Output.class)
-    public ResponseEntity getScriptOutput(@PathVariable Integer id){
+    public ResponseEntity getScriptOutput(@PathVariable Integer id) {
         return createResponseEntity(id, View.ViewType.Output);
     }
 
-    @PostMapping(value = "/async", consumes = MediaType.TEXT_PLAIN_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<Void> asyncScriptEval(@RequestBody String body)
-            throws ScriptException {
+    @PostMapping(consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<Script> evalScript(@RequestParam(defaultValue = "false") boolean async,
+                                             @RequestBody String body) throws ScriptException {
         Script script = service.compileAndSave(body);
-        service.submitAsync(script);
-        return ResponseEntity.created(fromPath("/api/scripts/{id}")
-                .buildAndExpand(script.getId()).toUri()).build();
-    }
-    @PostMapping(value = "/sync", consumes = MediaType.TEXT_PLAIN_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<StreamingResponseBody> syncScriptEval(@RequestBody String body)
-            throws ScriptException {
-        Script script = service.compileAndSave(body);
-        return ResponseEntity.created(fromPath("/api/scripts/{id}")
-                .buildAndExpand(script.getId()).toUri()).body(script);
+        if (async) {
+            service.submitAsync(script);
+            return ResponseEntity.created(fromPath("/api/scripts/{id}")
+                    .buildAndExpand(script.getId()).toUri()).body(null);
+        } else {
+            return ResponseEntity.created(fromPath("/api/scripts/{id}")
+                    .buildAndExpand(script.getId()).toUri()).body(script);
+        }
     }
 
     @DeleteMapping(value = "/{id}")
@@ -103,14 +95,16 @@ public class ScriptController {
                 })
                 .orElseThrow(IllegalArgumentException::new);
     }
-    
+
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity handleIllegalArgumentException(){
+    public ResponseEntity handleIllegalArgumentException() {
+        log.error("requested resource is not found");
         return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(ScriptException.class)
-    public ResponseEntity handleScriptException(ScriptException se){
+    public ResponseEntity handleScriptException(ScriptException se) {
+        log.error("source string is not valid script");
         return ResponseEntity.badRequest().body(se.getMessage());
     }
 

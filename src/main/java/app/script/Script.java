@@ -77,6 +77,8 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
             output.append(e.getMessage());
             status = ScriptStatus.Error;
             log.error("script exception occurred");
+        } finally {
+            out.close();
         }
     }
 

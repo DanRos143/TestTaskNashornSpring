@@ -49,13 +49,13 @@ public class ControllerTest {
 
     @Test
     public void anExecutionTest() throws Exception {
-        mockMvc.perform(post("/api/scripts/async")
+        mockMvc.perform(post("/api/scripts?async=true")
                 .contentType(MediaType.TEXT_PLAIN).accept(MediaType.TEXT_PLAIN)
                 .content("print('greetings')"))
                 //.andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/scripts/1"));
-        mockMvc.perform(post("/api/scripts/sync")
+        mockMvc.perform(post("/api/scripts?async=false")
                 .contentType(MediaType.TEXT_PLAIN).accept(MediaType.TEXT_PLAIN)
                 .content("print('greetings')"))
                 //.andDo(print())
@@ -71,14 +71,14 @@ public class ControllerTest {
         } catch (ScriptException e) {
             errorMessage = e.getMessage();
         }
-        mockMvc.perform(post("/api/scripts/async")
+        mockMvc.perform(post("/api/scripts?async=true")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content(script))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(errorMessage));
-        mockMvc.perform(post("/api/scripts/sync")
+        mockMvc.perform(post("/api/scripts?async=false")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content(script))
@@ -93,12 +93,12 @@ public class ControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._links.self.href").value("http://localhost/api/scripts"))
-                .andExpect(jsonPath("$._links.asyncExecution.href").value("http://localhost/api/scripts/async"))
-                .andExpect(jsonPath("$._links.syncExecution.href").value("http://localhost/api/scripts/sync"));
+                .andExpect(jsonPath("$._links.asyncEval.href").value("http://localhost/api/scripts?async=true"))
+                .andExpect(jsonPath("$._links.syncEval.href").value("http://localhost/api/scripts?async=false"));
     }
     @Test
     public void getSingleScriptTest() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(post("/api/scripts/async")
+        MvcResult mvcResult = mockMvc.perform(post("/api/scripts?async=true")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content("while(true){}"))
@@ -119,7 +119,7 @@ public class ControllerTest {
     }
     @Test
     public void outTest() throws Exception {
-        mockMvc.perform(post("/api/scripts/async")
+        mockMvc.perform(post("/api/scripts?async=true")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content("print(3)"))
