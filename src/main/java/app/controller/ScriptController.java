@@ -96,18 +96,6 @@ public class ScriptController {
                 .orElseThrow(IllegalArgumentException::new);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity handleIllegalArgumentException() {
-        log.error("requested resource is not found");
-        return ResponseEntity.notFound().build();
-    }
-
-    @ExceptionHandler(ScriptException.class)
-    public ResponseEntity handleScriptException(ScriptException se) {
-        log.error("source string is not valid script");
-        return ResponseEntity.badRequest().body(se.getMessage());
-    }
-
     private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {
         log.info("building links by type {}", type);
         return Optional.ofNullable(service.getScript(id))
