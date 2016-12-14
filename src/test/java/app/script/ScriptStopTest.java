@@ -11,7 +11,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.script.ScriptException;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ScriptCompilerImpl.class})
@@ -54,7 +53,7 @@ public class ScriptStopTest {
     public void aopTest() throws ScriptException {
         String body = "print('test')";
         Script script = new Script(1, body, compiler.compile(body));
-        script.runAsync();
+        script.eval();
     }
 
 }

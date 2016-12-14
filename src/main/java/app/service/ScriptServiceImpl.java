@@ -3,14 +3,12 @@ package app.service;
 import app.script.Script;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.CollectionFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.stereotype.Service;
 import app.compiler.ScriptCompiler;
 
 import javax.script.*;
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,7 +43,7 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Override
     public void submitAsync(Script script) {
-        executor.submit(script::runAsync);
+        executor.submit(script::eval);
     }
 
     @Override

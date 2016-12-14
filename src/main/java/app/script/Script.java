@@ -1,5 +1,6 @@
 package app.script;
 
+import app.util.Timer;
 import app.writer.TeeWriter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,7 +8,6 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.output.StringBuilderWriter;
-import org.jboss.logging.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.hateoas.Identifiable;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -45,6 +45,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     private StringBuilder output;
     private long executionTime;
     private Thread thread;
+    private Timer timer;
     private CompiledScript compiled;
     @Value("${application.script.stopDelay}")
     private long delay;
@@ -55,33 +56,38 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         this.output = new StringBuilder();
         this.status = ScriptStatus.Waiting;
         this.compiled = compiled;
+        this.timer = new Timer();
     }
 
     @Override
     public Integer getId() {
         return id;
     }
+/*    does much more than one thing, should be refactored somehow
+    don't take a look on loggers
+    time calculation is absolutely stupid
+    some kind of around function needed
+    */
 
     @Override
     public void writeTo(OutputStream out) throws IOException {
-        long start = 0;
         try {
-            log.info("headers sent, execution started");
             out.flush();
+            log.info("headers sent, execution started");
             thread = Thread.currentThread();
             status = ScriptStatus.Running;
-            start = System.currentTimeMillis();
+            timer.start();
             compiled.eval(createContext(out));
             status = ScriptStatus.Done;
             log.info("execution finished");
         } catch (ScriptException e) {
-            executionTime = System.currentTimeMillis() - start;
+            executionTime = timer.stop();
             out.write(e.getMessage().getBytes());
             output.append(e.getMessage());
             status = ScriptStatus.Error;
             log.error("script exception occurred");
         } finally {
-            executionTime = System.currentTimeMillis() - start;
+            executionTime = timer.stop();
             log.info("closing connection...");
             if (status.equals(ScriptStatus.Running)) status = ScriptStatus.Error;
             out.close();
@@ -92,18 +98,17 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
      * This method is submitted by executor.
      * Evaluates CompiledScript and manages script status
      */
-    public void runAsync(){
-        long start = 0;
+    public void eval(){
         try {
             log.info("async execution started");
             thread = Thread.currentThread();
             status = ScriptStatus.Running;
-            start = System.currentTimeMillis();
+            timer.start();
             compiled.eval(createContext(null));
             status = ScriptStatus.Done;
             log.info("async execution finished");
         } catch (ScriptException e) {
-            executionTime = System.currentTimeMillis() - start;
+            executionTime = timer.stop();
             output.append(e.getMessage());
             status = ScriptStatus.Error;
             log.info("exception occurred during evaluation");
