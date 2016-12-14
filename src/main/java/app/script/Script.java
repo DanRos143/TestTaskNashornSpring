@@ -63,11 +63,6 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     public Integer getId() {
         return id;
     }
-/*    does much more than one thing, should be refactored somehow
-    don't take a look on loggers
-    time calculation is absolutely stupid
-    some kind of around function needed
-    */
 
     @Override
     public void writeTo(OutputStream out) throws IOException {
