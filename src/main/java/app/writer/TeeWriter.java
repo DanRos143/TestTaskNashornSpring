@@ -6,7 +6,9 @@ import lombok.Setter;
 import java.io.*;
 
 /**
- *
+ * Custom Writer implementation which simply copy all output into StringBuilder object.
+ * Unfortunately apache commons.io contains only TeeOutputStream which is not acceptable
+ * in this case.
  */
 @Getter
 @Setter
