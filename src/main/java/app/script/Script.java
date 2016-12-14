@@ -71,11 +71,8 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
             log.info("headers sent, execution started");
             setThreadAndEval(out);
         } catch (ScriptException e) {
-            executionTime = timer.stop();
             out.write(e.getMessage().getBytes());
-            output.append(e.getMessage());
-            status = ScriptStatus.Error;
-            log.error("script exception occurred");
+            handleException(e);
         } finally {
             executionTime = timer.stop();
             log.info("closing connection...");
@@ -94,10 +91,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
             setThreadAndEval(null);
             log.info("async execution finished");
         } catch (ScriptException e) {
-            executionTime = timer.stop();
-            output.append(e.getMessage());
-            status = ScriptStatus.Error;
-            log.info("exception occurred during evaluation");
+            handleException(e);
         }
     }
 
@@ -124,7 +118,14 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         log.info("script context built");
         return ctx;
     }
-    
+
+    private void handleException(ScriptException e) {
+        executionTime = timer.stop();
+        output.append(e.getMessage());
+        status = ScriptStatus.Error;
+        log.error("script exception occurred");
+    }
+
     private void setThreadAndEval(OutputStream out) throws ScriptException {
         thread = Thread.currentThread();
         status = ScriptStatus.Running;
