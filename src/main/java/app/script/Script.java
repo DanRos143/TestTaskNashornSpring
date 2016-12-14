@@ -43,19 +43,19 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     private ScriptStatus status;
     private String body;
     private StringBuilder output;
-    private long executionTime;
     private Thread thread;
     private Timer timer;
     private CompiledScript compiled;
+    private long executionTime;
     @Value("${application.script.stopDelay}")
     private long delay;
 
     public Script(Integer id, String body, CompiledScript compiled){
         this.id = id;
         this.body = body;
+        this.compiled = compiled;
         this.output = new StringBuilder();
         this.status = ScriptStatus.Waiting;
-        this.compiled = compiled;
         this.timer = new Timer();
     }
 
