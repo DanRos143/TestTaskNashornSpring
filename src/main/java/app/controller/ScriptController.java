@@ -75,10 +75,12 @@ public class ScriptController {
                                              @RequestBody String body) throws ScriptException {
         Script script = service.compileAndSave(body);
         if (async) {
+            log.info("starting async evaluation");
             service.submitAsync(script);
             return ResponseEntity.created(fromPath("/api/scripts/{id}")
                     .buildAndExpand(script.getId()).toUri()).body(null);
         } else {
+            log.info("starting sync evaluation");
             return ResponseEntity.created(fromPath("/api/scripts/{id}")
                     .buildAndExpand(script.getId()).toUri()).body(script);
         }

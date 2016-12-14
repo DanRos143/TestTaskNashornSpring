@@ -88,6 +88,10 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         }
     }
 
+    /**
+     * This method is submitted by executor.
+     * Evaluates CompiledScript and manages script status
+     */
     public void runAsync(){
         long start = 0;
         try {
