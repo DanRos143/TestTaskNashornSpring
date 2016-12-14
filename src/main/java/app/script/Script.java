@@ -69,12 +69,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         try {
             out.flush();
             log.info("headers sent, execution started");
-            thread = Thread.currentThread();
-            status = ScriptStatus.Running;
-            timer.start();
-            compiled.eval(createContext(out));
-            status = ScriptStatus.Done;
-            log.info("execution finished");
+            setThreadAndEval(out);
         } catch (ScriptException e) {
             executionTime = timer.stop();
             out.write(e.getMessage().getBytes());
@@ -96,11 +91,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     public void eval(){
         try {
             log.info("async execution started");
-            thread = Thread.currentThread();
-            status = ScriptStatus.Running;
-            timer.start();
-            compiled.eval(createContext(null));
-            status = ScriptStatus.Done;
+            setThreadAndEval(null);
             log.info("async execution finished");
         } catch (ScriptException e) {
             executionTime = timer.stop();
@@ -132,5 +123,14 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
                 new TeeWriter(out, output));
         log.info("script context built");
         return ctx;
+    }
+    
+    private void setThreadAndEval(OutputStream out) throws ScriptException {
+        thread = Thread.currentThread();
+        status = ScriptStatus.Running;
+        timer.start();
+        compiled.eval(createContext(out));
+        status = ScriptStatus.Done;
+        log.info("execution finished");
     }
 }
