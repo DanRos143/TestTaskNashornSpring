@@ -44,9 +44,9 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     private String body;
     private StringBuilder output;
     private Thread thread;
-    private Timer timer;
     private CompiledScript compiled;
-    private long executionTime;
+    private String executionTime;
+    private Timer timer;
     @Value("${application.script.stopDelay}")
     private long delay;
 
@@ -99,6 +99,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
      * shuts CompiledScript evaluation by interrupting the thread, and if it doesn't help - kills it
      * after specified delay with thread.stop(). Delay is configurable in application.yml
      */
+    @SuppressWarnings("deprecation")
     @SneakyThrows(InterruptedException.class)
     public void stopExecution() {
         thread.interrupt();

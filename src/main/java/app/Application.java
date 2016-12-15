@@ -7,7 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.hateoas.config.EnableHypermediaSupport;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;

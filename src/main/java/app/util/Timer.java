@@ -1,20 +1,25 @@
 package app.util;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+import lombok.experimental.NonFinal;
 
-@Getter
-@Setter
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+
+@Value
+@NoArgsConstructor
 public class Timer {
-    private long start;
-    private long finish;
+    @NonFinal private long start;
+    @NonFinal private long finish;
 
     public void start() {
         this.start = System.currentTimeMillis();
     }
 
-    public long stop() {
+    public String stop() {
         this.finish = System.currentTimeMillis();
-        return finish - start;
+        return Duration.of(finish - start, ChronoUnit.MILLIS)
+                .toString();
     }
 }

@@ -1,26 +1,19 @@
 package app.compiler;
 
 
-import app.script.Script;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.script.CompiledScript;
-import javax.script.ScriptContext;
 import javax.script.ScriptException;
-import javax.script.SimpleScriptContext;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
-import java.time.Duration;
-import java.time.Instant;
+import java.io.IOException;
 
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(SpringRunner.class)
 @SpringBootTest(classes = ScriptCompilerImpl.class)
 public class CompilerTest {
 
@@ -49,4 +42,17 @@ public class CompilerTest {
         compiledScript.eval();
         Assert.assertEquals(compileError, null);
     }
+
+    @Test
+    public void throwIOExceptionFromScript() {
+        Throwable t = null;
+        String script = "print('preparing to throw');throw new java.io.IOException();";
+        try {
+            compiler.compile(script).eval();
+        } catch (ScriptException e) {
+            t = e.getCause();
+        }
+        Assert.assertTrue(t.getCause() instanceof IOException);
+    }
+
 }

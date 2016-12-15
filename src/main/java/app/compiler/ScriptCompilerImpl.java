@@ -1,22 +1,19 @@
 package app.compiler;
 
-import jdk.nashorn.api.scripting.NashornScriptEngine;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import org.springframework.stereotype.Component;
 
-import javax.script.*;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.function.Function;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 
 @Component
 public class ScriptCompilerImpl implements ScriptCompiler {
-    private NashornScriptEngine nashorn;
+    private Compilable nashorn;
 
     public ScriptCompilerImpl() {
-        nashorn = (NashornScriptEngine)
+        nashorn = (Compilable)
                 new ScriptEngineManager().getEngineByName("nashorn");
     }
 

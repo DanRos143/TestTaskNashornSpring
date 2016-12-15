@@ -2,8 +2,7 @@ package app.controller;
 
 import app.script.Script;
 import app.script.ScriptResource;
-import app.view.View;
-import com.fasterxml.jackson.annotation.JsonView;
+import app.service.ScriptService;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +13,13 @@ import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import app.service.ScriptService;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
-import static org.springframework.web.util.UriComponentsBuilder.*;
-
-import javax.script.*;
+import javax.script.ScriptException;
 import java.util.Optional;
+
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+import static org.springframework.web.util.UriComponentsBuilder.fromPath;
 
 @Log4j2
 @RestController
@@ -36,12 +35,11 @@ public class ScriptController {
     }
 
     @Autowired
-    public void setAssembler(ResourceAssemblerSupport assembler) {
+    public void setAssembler(ResourceAssemblerSupport<Script, ScriptResource> assembler) {
         this.assembler = assembler;
     }
 
     @GetMapping(produces = MediaTypes.HAL_JSON_VALUE)
-    @JsonView(View.Rest.class)
     @SneakyThrows
     public Resources<ScriptResource> getAllScripts() {
         return new Resources<>(assembler.toResources(service.getScripts()),
@@ -53,21 +51,24 @@ public class ScriptController {
     }
 
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE)
-    @JsonView(View.Rest.class)
-    public ResponseEntity getScriptRepresentation(@PathVariable Integer id) {
-        return createResponseEntity(id, View.ViewType.Rest);
+    public ResponseEntity<ScriptResource> getScriptRepresentation(@PathVariable Integer id) {
+        return Optional.ofNullable(service.getScript(id))
+                .map(script -> ResponseEntity.ok(assembler.toResource(script).buildLinks()))
+                .orElseThrow(IllegalArgumentException::new);
     }
 
     @GetMapping(value = "/{id}/body", produces = MediaTypes.HAL_JSON_VALUE)
-    @JsonView(View.Body.class)
-    public ResponseEntity getScriptBody(@PathVariable Integer id) {
-        return createResponseEntity(id, View.ViewType.Body);
+    public ResponseEntity<String> getScriptBody(@PathVariable Integer id) {
+        return Optional.ofNullable(service.getScript(id))
+                .map(script -> ResponseEntity.ok(script.getBody()))
+                .orElseThrow(IllegalArgumentException::new);
     }
 
     @GetMapping(value = "/{id}/output", produces = MediaTypes.HAL_JSON_VALUE)
-    @JsonView(View.Output.class)
-    public ResponseEntity getScriptOutput(@PathVariable Integer id) {
-        return createResponseEntity(id, View.ViewType.Output);
+    public ResponseEntity<String> getScriptOutput(@PathVariable Integer id) {
+        return Optional.ofNullable(service.getScript(id))
+                .map(script -> ResponseEntity.ok(script.getOutput().toString()))
+                .orElseThrow(IllegalArgumentException::new);
     }
 
     @PostMapping(consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
@@ -87,7 +88,7 @@ public class ScriptController {
     }
 
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity stopScriptExecution(@PathVariable Integer id) {
+    public ResponseEntity<Void> stopScriptExecution(@PathVariable Integer id) {
         return Optional.ofNullable(service.getScript(id))
                 .map(script -> {
                     log.info("stopping script execution");
@@ -95,14 +96,6 @@ public class ScriptController {
                     service.delete(id);
                     return ResponseEntity.ok().build();
                 })
-                .orElseThrow(IllegalArgumentException::new);
-    }
-
-    private ResponseEntity createResponseEntity(Integer id, View.ViewType type) {
-        log.info("building links by type {}", type);
-        return Optional.ofNullable(service.getScript(id))
-                .map(script -> ResponseEntity.ok(assembler.toResource(script)
-                        .addLinksByRepresentationType(type)))
                 .orElseThrow(IllegalArgumentException::new);
     }
 }

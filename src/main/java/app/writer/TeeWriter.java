@@ -3,7 +3,9 @@ package app.writer;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
 /**
  * Custom Writer implementation which simply copy all output into StringBuilder object.
