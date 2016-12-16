@@ -6,6 +6,8 @@ application:
         threadNamePrefix: executorThread-
     script:
         stopDelay: 2
+server:
+  port: 5000
 
 
 

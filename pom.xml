@@ -107,7 +107,11 @@
                     <versionLabel>${project.build.finalName}</versionLabel>
                     <cnamePrefix>NashornSpring</cnamePrefix>
                     <s3Bucket>elasticbeanstalk-eu-central-1-763507571005</s3Bucket>
+                    <s3Key>${project.artifactId}/${project.build.finalName}.${project.packaging}</s3Key>
                     <artifactFile>target/application.jar</artifactFile>
+                    <environmentTierType>Java</environmentTierType>
+                    <environmentName>my-env</environmentName>
+                    <solutionStack>64bit Amazon Linux 2016.09 v2.3.0 running Java 8</solutionStack>
                 </configuration>
             </plugin>
             <plugin>
