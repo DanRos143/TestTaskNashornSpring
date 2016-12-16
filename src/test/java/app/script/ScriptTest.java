@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.springframework.util.ReflectionUtils;
 
 import javax.script.ScriptContext;
+import javax.script.ScriptException;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -41,5 +42,12 @@ public class ScriptTest {
         Assert.assertTrue(context.getWriter() instanceof TeeWriter);
     }
 
+    @Test
+    public void handleExceptionTest() throws NoSuchMethodException {
+        Method handle = Script.class.getDeclaredMethod("handleException", ScriptException.class);
+        handle.setAccessible(true);
+        ReflectionUtils.invokeMethod(handle, script, new ScriptException("invalid script"));
+        Assert.assertEquals(script.getStatus(), Status.Broken);
+    }
 
 }

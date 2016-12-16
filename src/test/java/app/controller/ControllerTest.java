@@ -25,10 +25,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class, ScriptController.class, Application.class})
+@SpringBootTest(classes = {ScriptServiceImpl.class, ScriptCompilerImpl.class,
+        ScriptController.class, Application.class, GlobalExceptionHandler.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ControllerTest {
 
+    private final String URL = "/api/scripts";
     private MockMvc mockMvc;
 
     @Autowired
@@ -44,18 +46,18 @@ public class ControllerTest {
 
     @Test
     public void anExecutionTest() throws Exception {
-        mockMvc.perform(post("/api/scripts?async=true")
+        mockMvc.perform(post(URL + "?async=true")
                 .contentType(MediaType.TEXT_PLAIN).accept(MediaType.TEXT_PLAIN)
                 .content("print('greetings')"))
                 //.andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/scripts/1"));
-        mockMvc.perform(post("/api/scripts?async=false")
+                .andExpect(header().string("Location", URL + "/1"));
+        mockMvc.perform(post(URL + "?async=false")
                 .contentType(MediaType.TEXT_PLAIN).accept(MediaType.TEXT_PLAIN)
                 .content("print('greetings')"))
                 //.andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/scripts/2"));
+                .andExpect(header().string("Location", URL + "/2"));
     }
     @Test
     public void catchScriptCompilationException() throws Exception {
@@ -66,14 +68,14 @@ public class ControllerTest {
         } catch (ScriptException e) {
             errorMessage = e.getMessage();
         }
-        mockMvc.perform(post("/api/scripts?async=true")
+        mockMvc.perform(post(URL + "?async=true")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content(script))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(errorMessage));
-        mockMvc.perform(post("/api/scripts?async=false")
+        mockMvc.perform(post(URL + "?async=false")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content(script))
@@ -93,7 +95,7 @@ public class ControllerTest {
     }
     @Test
     public void getSingleScriptTest() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(post("/api/scripts?async=true")
+        MvcResult mvcResult = mockMvc.perform(post(URL + "?async=true")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content("while(true){}"))
@@ -114,10 +116,19 @@ public class ControllerTest {
     }
     @Test
     public void outTest() throws Exception {
-        mockMvc.perform(post("/api/scripts?async=true")
+        mockMvc.perform(post(URL + "?async=true")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.TEXT_PLAIN)
                 .content("print(3)"))
                 .andExpect(status().isCreated());
     }
+
+    @Test
+    public void getIllegalStateByGettingNotExistingBodyOrOutput() throws Exception {
+        mockMvc.perform(get(URL + "/10000/body"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get(URL + "/10000/output"))
+                .andExpect(status().isNotFound());
+    }
+
 }

@@ -19,7 +19,7 @@ public class ScriptResource extends ResourceSupport {
 
     @JsonProperty("id")
     private Integer identifier;
-    private ScriptStatus status;
+    private Status status;
     private String totalTime;
 
     public ScriptResource buildLinks() {
@@ -29,8 +29,8 @@ public class ScriptResource extends ResourceSupport {
                 linkTo(methodOn(ScriptController.class).getScriptBody(identifier))
                         .slash(identifier + "/body").withRel("body")
         );
-        if (!status.equals(ScriptStatus.Done) &&
-                !status.equals(ScriptStatus.Error))
+        if (!status.equals(Status.Done) &&
+                !status.equals(Status.Broken))
             this.add(linkTo(methodOn(ScriptController.class).stopScriptExecution(identifier))
                     .slash(identifier).withRel("stop"));
         return this;

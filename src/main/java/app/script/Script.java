@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @see TeeWriter
  * @see StringBuilderWriter
  * @see CompiledScript
- * @see ScriptStatus
+ * @see Status
  * @see Identifiable
  * @see StreamingResponseBody
  */
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @NoArgsConstructor
 public class Script implements Identifiable<Integer>, StreamingResponseBody {
     private Integer id;
-    private ScriptStatus status;
+    private Status status;
     private String body;
     private StringBuilder output;
     private Thread thread;
@@ -55,7 +55,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         this.body = body;
         this.compiled = compiled;
         this.output = new StringBuilder();
-        this.status = ScriptStatus.Waiting;
+        this.status = Status.Waiting;
         this.timer = new Timer();
     }
 
@@ -76,7 +76,7 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
         } finally {
             executionTime = timer.stop();
             log.info("closing connection...");
-            if (status.equals(ScriptStatus.Running)) status = ScriptStatus.Error;
+            if (status.equals(Status.Running)) status = Status.Broken;
             out.close();
         }
     }
@@ -123,16 +123,16 @@ public class Script implements Identifiable<Integer>, StreamingResponseBody {
     private void handleException(ScriptException e) {
         executionTime = timer.stop();
         output.append(e.getMessage());
-        status = ScriptStatus.Error;
+        status = Status.Broken;
         log.error("script exception occurred");
     }
 
     private void setThreadAndEval(OutputStream out) throws ScriptException {
         thread = Thread.currentThread();
-        status = ScriptStatus.Running;
+        status = Status.Running;
         timer.start();
         compiled.eval(createContext(out));
-        status = ScriptStatus.Done;
+        status = Status.Done;
         log.info("execution finished");
     }
 }

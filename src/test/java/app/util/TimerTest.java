@@ -29,4 +29,5 @@ public class TimerTest {
         System.out.println(stop);
         Assert.assertTrue(stop.matches(pattern));
     }
+
 }

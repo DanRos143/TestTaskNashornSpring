@@ -5,4 +5,5 @@ package app.script;
  * states for evaluating Script.
  * @author danros
  */
-public enum ScriptStatus { Running, Done, Waiting, Error }
+public enum Status { Running, Done, Waiting, Broken
+}

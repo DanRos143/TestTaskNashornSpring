@@ -1,17 +1,19 @@
 package app.util;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
-@Value
+@Getter
 @NoArgsConstructor
 public class Timer {
-    @NonFinal private long start;
-    @NonFinal private long finish;
+    private long start;
+    private long finish;
 
     public void start() {
         this.start = System.currentTimeMillis();

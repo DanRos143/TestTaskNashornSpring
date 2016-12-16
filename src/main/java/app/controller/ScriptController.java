@@ -2,6 +2,7 @@ package app.controller;
 
 import app.script.Script;
 import app.script.ScriptResource;
+import app.script.Status;
 import app.service.ScriptService;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -92,7 +93,8 @@ public class ScriptController {
         return Optional.ofNullable(service.getScript(id))
                 .map(script -> {
                     log.info("stopping script execution");
-                    script.stopExecution();
+                    if (!script.getStatus().equals(Status.Waiting))
+                        script.stopExecution();
                     service.delete(id);
                     return ResponseEntity.ok().build();
                 })
